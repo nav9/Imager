@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imager - Evolutionary Filters</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">Imager</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+                    <li class="nav-item"><a class="nav-link active" aria-current="page" href="image-filters.html">Image Filters</a></li>
+                    <li class="nav-item"><a class="nav-link" href="image-resizing.html">Image Resizing</a></li>
+                    <li class="nav-item"><a class="nav-link" href="image-cropping.html">Image Cropping</a></li>
+                    <li class="nav-item"><a class="nav-link" href="faq.html">FAQ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="suggest-features.html">Suggest Features</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container-fluid mt-3">
+        <div class="accordion" id="controlPanelAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Control Panel
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#controlPanelAccordion">
+                    <div class="accordion-body">
+                        <div class="row">
+                            <div class="col-lg-6 mb-3">
+                                <h6><i class="bi bi-image"></i> 1. Load Image</h6>
+                                <div class="mb-2">
+                                    <label for="image-upload" class="form-label">Upload from device:</label>
+                                    <input class="form-control" type="file" id="image-upload" accept="image/png, image/jpeg, image/webp">
+                                </div>
+                                <div>
+                                    <label for="image-url" class="form-label">Or load from URL:</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="image-url" placeholder="https://example.com/image.png">
+                                        <button class="btn btn-outline-secondary" type="button" id="load-url-btn" title="Load Image from URL"><i class="bi bi-arrow-down-circle"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-6 mb-3">
+                                <h6><i class="bi bi-sliders"></i> 2. Evolution Parameters</h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label for="num-images-slider" class="form-label">Population Size: <span id="num-images-value">20</span></label>
+                                        <input type="range" class="form-range" id="num-images-slider" min="5" max="100" value="20">
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label for="preview-size-slider" class="form-label">Preview Size: <span id="preview-size-value">150</span>px</label>
+                                        <input type="range" class="form-range" id="preview-size-slider" min="80" max="300" value="150">
+                                    </div>
+                                </div>
+                                 <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <label for="inertia-slider" class="form-label" title="Controls exploration (higher) vs exploitation (lower)">Inertia: <span id="inertia-value">0.7</span></label>
+                                        <input type="range" class="form-range" id="inertia-slider" min="0.1" max="1.5" step="0.1" value="0.7">
+                                    </div>
+                                     <div class="col-md-4 mb-2">
+                                        <label for="cognition-slider" class="form-label" title="How much to trust its own best find">Cognition: <span id="cognition-value">1.5</span></label>
+                                        <input type="range" class="form-range" id="cognition-slider" min="0.1" max="3.0" step="0.1" value="1.5">
+                                    </div>
+                                     <div class="col-md-4 mb-2">
+                                        <label for="social-slider" class="form-label" title="How much to trust the swarm's best find">Social: <span id="social-value">1.5</span></label>
+                                        <input type="range" class="form-range" id="social-slider" min="0.1" max="3.0" step="0.1" value="1.5">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6><i class="bi bi-palette"></i> 3. Select Image Filters</h6>
+                        <div class="d-flex flex-wrap gap-3" id="filter-checkboxes">
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="brightness" id="cb-brightness" checked><label class="form-check-label" for="cb-brightness">Brightness</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="contrast" id="cb-contrast" checked><label class="form-check-label" for="cb-contrast">Contrast</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="gamma" id="cb-gamma"><label class="form-check-label" for="cb-gamma">Gamma</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="hue" id="cb-hue"><label class="form-check-label" for="cb-hue">Hue</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="saturation" id="cb-saturation"><label class="form-check-label" for="cb-saturation">Saturation</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="vibrance" id="cb-vibrance"><label class="form-check-label" for="cb-vibrance">Vibrance</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="sepia" id="cb-sepia"><label class="form-check-label" for="cb-sepia">Sepia</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="sharpen" id="cb-sharpen"><label class="form-check-label" for="cb-sharpen">Sharpen</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="unsharpMask" id="cb-unsharp"><label class="form-check-label" for="cb-unsharp">Unsharp Mask</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="noise" id="cb-noise"><label class="form-check-label" for="cb-noise">Noise</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="denoise" id="cb-denoise"><label class="form-check-label" for="cb-denoise">Denoise</label></div>
+                            <div class="form-check"><input class="form-check-input" type="checkbox" value="vignette" id="cb-vignette"><label class="form-check-label" for="cb-vignette">Vignette</label></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 my-2 flex-wrap">
+            <button class="btn btn-primary" id="try-again-btn" title="Evolve based on selection"><i class="bi bi-arrow-repeat"></i> Try Again</button>
+            <button class="btn btn-secondary" id="reset-btn" title="Start over with a new random population"><i class="bi bi-shuffle"></i> Reset</button>
+            <div class="btn-group">
+                <button class="btn btn-outline-secondary" id="prev-btn" title="Go to previous generation" disabled><i class="bi bi-arrow-left"></i></button>
+                <button class="btn btn-outline-secondary" id="next-btn" title="Go to next generation" disabled><i class="bi bi-arrow-right"></i></button>
+            </div>
+            <button class="btn btn-outline-info" id="compare-btn" title="Compare selected images with original" disabled><i class="bi bi-front"></i> Compare</button>
+            <button class="btn btn-success" id="save-btn" title="Save selected images" disabled><i class="bi bi-download"></i> Save</button>
+            <div id="status-text" class="ms-auto text-muted fst-italic">Please load an image to begin.</div>
+        </div>
+
+        <div class="image-grid" id="image-grid">
+            </div>
+
+    </main>
+
+    <div class="modal fade" id="compare-modal" tabindex="-1" aria-labelledby="compareModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="compareModalLabel">Compare Images</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row" id="modal-content-area">
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/glfx.js"></script>
+    <script src="js/jszip.min.js"></script>
+    <script src="js/image-filters.js"></script>
+</body>
+</html>
