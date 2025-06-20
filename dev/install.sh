@@ -35,7 +35,8 @@ if [ -f "$JS_DIR/glfx.js" ]; then
     rm "$JS_DIR/glfx.js" # Remove potentially corrupted file
 fi
 echo "Downloading glfx.js..."
-curl -L "https://raw.githubusercontent.com/evanw/glfx.js/master/glfx.js" -o "$JS_DIR/glfx.js"
+curl -L "https://evanw.github.io/glfx.js/glfx.js" -o "$JS_DIR/glfx.js"
+#curl -L "https://raw.githubusercontent.com/evanw/glfx.js/master/glfx.js" -o "$JS_DIR/glfx.js"
 
 
 # JSZip (for zipping and downloading files)
