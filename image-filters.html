@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="dark">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,12 +9,14 @@
     <link rel="stylesheet" href="css/bootstrap-icons.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
 
-    <nav class="navbar navbar-expand-sm navbar-dark bg-dark fixed-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand" href="index.html">Imager</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -29,104 +32,103 @@
         </div>
     </nav>
 
-    <main class="container-fluid mt-3">
-        <button class="btn btn-secondary btn-sm mb-2" id="toggle-controls-btn" type="button" data-bs-toggle="collapse" data-bs-target="#controlPanel" aria-expanded="true" aria-controls="controlPanel">
-            <i class="bi bi-gear-fill"></i> Show/Hide Controls
-        </button>
 
-        <div class="collapse show" id="controlPanel">
-            <div class="card card-body mb-3 control-panel">
-                <div class="row">
-                    <div class="col-lg-4 mb-3">
-                        <h6><i class="bi bi-image"></i> 1. Load Image</h6>
-                        <div class="upload-widget">
-                            <label for="image-upload" class="form-label">Upload from device:</label>
-                            <input class="form-control" type="file" id="image-upload" accept="image/png, image/jpeg, image/webp">
-                        </div>
-                    </div>
 
-                    <div class="col-lg-8 mb-3">
-                        <h6><i class="bi bi-sliders"></i> 2. Evolution Parameters</h6>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <label for="num-images-slider" class="form-label">Population Size: <span id="num-images-value">20</span></label>
-                                <input type="range" class="form-range" id="num-images-slider" min="5" max="100" value="20" title="Number of image variations to generate in each step. More is slower but explores more options.">
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <label for="preview-size-slider" class="form-label">Preview Size: <span id="preview-size-value">20</span>%</label>
-                                <input type="range" class="form-range" id="preview-size-slider" min="5" max="50" value="20" title="Size of the preview thumbnails as a percentage of the original image width.">
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-4 mb-2">
-                                <label for="inertia-slider" class="form-label">Inertia: <span id="inertia-value">0.7</span></label>
-                                <input type="range" class="form-range" id="inertia-slider" min="0.1" max="1.5" step="0.1" value="0.7" title="Controls algorithm's momentum. High values explore new areas, low values refine current results. Optimal: 0.6-0.9">
-                            </div>
-                             <div class="col-md-4 mb-2">
-                                <label for="cognition-slider" class="form-label">Cognition (Personal): <span id="cognition-value">1.5</span></label>
-                                <input type="range" class="form-range" id="cognition-slider" min="0.1" max="3.0" step="0.1" value="1.5" title="How much each variation 'trusts' its own previous best result. Optimal: 1.5-2.0">
-                            </div>
-                             <div class="col-md-4 mb-2">
-                                <label for="social-slider" class="form-label">Social (Global): <span id="social-value">1.5</span></label>
-                                <input type="range" class="form-range" id="social-slider" min="0.1" max="3.0" step="0.1" value="1.5" title="How much each variation is attracted to the best result found by the entire population. Optimal: 1.5-2.0">
+        <main class="container-fluid mt-3">
+            
+            <button class="btn btn-secondary btn-sm mb-2" id="toggle-controls-btn" type="button" data-bs-toggle="collapse" data-bs-target="#controlPanel" aria-expanded="false" aria-controls="controlPanel">
+                <i class="bi bi-gear-fill"></i> Show/Hide Controls
+            </button>
+
+            <div class="collapse" id="controlPanel">
+                <div class="card card-body mb-3 control-panel">
+                    <div class="row gy-3">
+                        <div class="col-lg-8">
+                            <h6><i class="bi bi-sliders"></i> Evolution Parameters</h6>
+                            <div class="row">
+                                <div class="col-md-2 mb-2">
+                                    <label for="num-images-slider" class="form-label">Population Size: <span id="num-images-value">20</span></label>
+                                    <input type="range" class="form-range" id="num-images-slider" min="5" max="100" value="20" title="Number of image variations to generate. More is slower but explores more options.">
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <label for="preview-size-slider" class="form-label">Preview Size: <span id="preview-size-value">20</span>%</label>
+                                    <input type="range" class="form-range" id="preview-size-slider" min="5" max="50" value="20" title="Size of the preview thumbnails as a percentage of the original image width.">
+                                </div>
+
+                                <div class="col-md-2 mb-2">
+                                    <label for="inertia-slider" class="form-label">Inertia: <span id="inertia-value">0.7</span></label>
+                                    <input type="range" class="form-range" id="inertia-slider" min="0.1" max="1.5" step="0.1" value="0.7" title="Controls algorithm's momentum. High values explore new areas, low values refine current results. Optimal: 0.6-0.9">
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <label for="cognition-slider" class="form-label">Cognition (Individual): <span id="cognition-value">1.5</span></label>
+                                    <input type="range" class="form-range" id="cognition-slider" min="0.1" max="3.0" step="0.1" value="1.5" title="How much each variation 'trusts' its own previous best result. Optimal: 1.5-2.0">
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <label for="social-slider" class="form-label">Social (Global): <span id="social-value">1.5</span></label>
+                                    <input type="range" class="form-range" id="social-slider" min="0.1" max="3.0" step="0.1" value="1.5" title="How much each variation is attracted to the best result found by the entire population. Optimal: 1.5-2.0">
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <h6><i class="bi bi-palette"></i> 3. Select Image Filters</h6>
-                <div class="d-flex gap-2 mb-2">
-                    <button class="btn btn-outline-primary btn-sm" id="select-all-filters">Select All</button>
-                    <button class="btn btn-outline-secondary btn-sm" id="select-none-filters">Select None</button>
-                </div>
-                <div class="d-flex flex-wrap gap-3" id="filter-checkboxes">
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="brightness" checked> Brightness/Contrast</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="gamma" checked> Gamma Correction</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="saturation" checked> Saturation (HSV)</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="invert" checked> Invert Colors</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="threshold" checked> Thresholding</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="clahe" checked> CLAHE</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="sharpen" checked> Sharpen (Kernel)</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="blur" checked> Gaussian Blur</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="median" checked> Median Filter</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="denoise" checked> Denoising</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="canny" checked> Canny Edge Detection</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="sobel" checked> Sobel Edge Detection</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="erode" checked> Erode (Morphology)</div>
-                    <div class="form-check"><input class="form-check-input" type="checkbox" value="dilate" checked> Dilate (Morphology)</div>
+                    <hr>
+                    <h6><i class="bi bi-palette"></i> Select Image Filters</h6>
+                    <div class="d-flex gap-2 mb-2">
+                        <button class="btn btn-outline-primary btn-sm" id="select-all-filters">Select All</button>
+                        <button class="btn btn-outline-secondary btn-sm" id="select-none-filters">Select None</button>
+                    </div>
+                    <div class="d-flex flex-wrap gap-3" id="filter-checkboxes">
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="brightness" checked> Brightness/Contrast</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="gamma" checked>Gamma Correction</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="saturation" checked> Saturation (HSV)</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="invert" checked>Invert Colors</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="threshold" checked> Thresholding</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="clahe" checked>CLAHE</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="sharpen" checked>Sharpen (Kernel)</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="blur" checked>Gaussian Blur</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="median" checked>Median Filter</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="denoise" checked>Denoising</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="canny" checked>Canny Edge Detection</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="sobel" checked>Sobel Edge Detection</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="erode" checked>Erode (Morphology)</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="dilate" checked>Dilate (Morphology)</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="d-flex align-items-center gap-2 my-2 flex-wrap">
-            <button class="btn btn-primary" id="try-again-btn" title="Evolve based on selection"><i class="bi bi-arrow-repeat"></i> Try Again</button>
-            <button class="btn btn-secondary" id="reset-btn" title="Start over with a new random population"><i class="bi bi-shuffle"></i> Reset</button>
-            <div class="btn-group">
-                <button class="btn btn-outline-secondary" id="prev-btn" title="Go to previous generation" disabled><i class="bi bi-arrow-left"></i></button>
-                <button class="btn btn-outline-secondary" id="next-btn" title="Go to next generation" disabled><i class="bi bi-arrow-right"></i></button>
+            <div class="d-flex align-items-center gap-2 my-2 flex-wrap">
+                <div class="upload-widget">
+                    <!-- <label for="image-upload" class="form-label">Start by clicking `Browse` to upload an image:</label> -->
+                    <input class="form-control" type="file" id="image-upload" accept="image/png, image/jpeg, image/webp">
+                </div>                
+                <button class="btn btn-success" id="try-again-btn" title="Evolve based on selection"><i class="bi bi-arrow-repeat"></i> Evolve</button>
+                <button class="btn btn-secondary" id="reset-btn" title="Start over with a new random population"><i class="bi bi-shuffle"></i> Reset</button>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary" id="prev-btn" title="Go to previous generation"><i class="bi bi-arrow-left"></i></button>
+                    <button class="btn btn-outline-secondary" id="next-btn" title="Go to next generation"><i class="bi bi-arrow-right"></i></button>
+                </div>
+                <button class="btn btn-primary" id="compare-btn" title="Compare selected images with original"><i class="bi bi-front"></i> Compare</button>
+                <button class="btn btn-primary" id="save-btn" title="Save selected images"><i class="bi bi-download"></i> Save</button>
+                <div id="status-text" class="ms-auto text-muted fst-italic">Waiting for OpenCV.js...</div>
             </div>
-            <button class="btn btn-outline-info" id="compare-btn" title="Compare selected images with original" disabled><i class="bi bi-front"></i> Compare</button>
-            <button class="btn btn-success" id="save-btn" title="Save selected images" disabled><i class="bi bi-download"></i> Save</button>
-            <div id="status-text" class="ms-auto text-muted fst-italic">Please load an image to begin.</div>
-        </div>
 
-        <div class="image-grid" id="image-grid"></div>
+            <div class="image-grid" id="image-grid"></div>
 
-    </main>
+        </main>
+
 
     <div class="modal fade" id="compare-modal" tabindex="-1" aria-labelledby="compareModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="compareModalLabel">Compare Images</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row" id="modal-content-area">
-              </div>
-          </div>
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="compareModalLabel">Compare Images</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row" id="modal-content-area"></div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
     <div id="processing-overlay" class="d-none">
@@ -137,7 +139,8 @@
         <p id="processing-status" class="mb-1">Initializing...</p>
         <p id="processing-timer" class="text-muted">Time elapsed: 0.0s</p>
         <p id="processing-eta" class="text-muted">ETA: calculating...</p>
-    </div>    
+        <button class="btn btn-danger mt-3" id="cancel-processing-btn"><i class="bi bi-x-circle"></i> Cancel</button>
+    </div>
 
     <script async src="js/opencv.js" id="opencv-script"></script>
     <script src="js/jquery.min.js"></script>
@@ -145,4 +148,5 @@
     <script src="js/jszip.min.js"></script>
     <script src="js/image-filters.js"></script>
 </body>
+
 </html>

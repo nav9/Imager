@@ -110,58 +110,6 @@ else
   echo "Cropper.js CSS already exists."
 fi
 
-
-# --- CUSTOM CSS ---
-# Create a custom style file for minor adjustments
-if [ ! -f "$CSS_DIR/style.css" ]; then
-  echo "Creating custom stylesheet..."
-  touch "$CSS_DIR/style.css"
-  # Add some custom styles
-  cat <<EOT >> "$CSS_DIR/style.css"
-/* Custom Styles for Imager */
-
-/* Ensure minimal margins and padding */
-body {
-    padding-top: 56px; /* Adjust for fixed navbar */
-}
-
-/* Make image grid responsive with minimal gap */
-.image-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 3px;
-}
-
-.thumbnail-container {
-    position: relative;
-    cursor: pointer;
-}
-
-.thumbnail {
-    width: 100%;
-    height: auto;
-    display: block;
-    border: 2px solid transparent;
-    transition: border-color 0.2s linear;
-    border-radius: 4px;
-}
-
-.thumbnail.selected {
-    border-color: var(--bs-primary);
-}
-
-.modal-dialog-centered {
-    max-width: 95vw;
-}
-
-.cropper-container {
-    max-width: 100%;
-}
-EOT
-else
-    echo "Custom stylesheet already exists."
-fi
-
 echo "----------------------------------------"
 echo "Installation complete."
 echo "----------------------------------------"
