@@ -78,11 +78,11 @@
                         <button class="btn btn-outline-secondary btn-sm" id="select-none-filters">Select None</button>
                     </div>
                     <div class="d-flex flex-wrap gap-3" id="filter-checkboxes">
-                        <div class="form-check"><input class="form-check-input" type="checkbox" value="brightness" checked> Brightness/Contrast</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="brightness" checked>Brightness/Contrast</div>
                         <div class="form-check"><input class="form-check-input" type="checkbox" value="gamma" checked>Gamma Correction</div>
-                        <div class="form-check"><input class="form-check-input" type="checkbox" value="saturation" checked> Saturation (HSV)</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="saturation" checked>Saturation (HSV)</div>
                         <div class="form-check"><input class="form-check-input" type="checkbox" value="invert" checked>Invert Colors</div>
-                        <div class="form-check"><input class="form-check-input" type="checkbox" value="threshold" checked> Thresholding</div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" value="threshold" checked>Thresholding</div>
                         <div class="form-check"><input class="form-check-input" type="checkbox" value="clahe" checked>CLAHE</div>
                         <div class="form-check"><input class="form-check-input" type="checkbox" value="sharpen" checked>Sharpen (Kernel)</div>
                         <div class="form-check"><input class="form-check-input" type="checkbox" value="blur" checked>Gaussian Blur</div>
@@ -142,11 +142,17 @@
         <button class="btn btn-danger mt-3" id="cancel-processing-btn"><i class="bi bi-x-circle"></i> Cancel</button>
     </div>
 
-    <script async src="js/opencv.js" id="opencv-script"></script>
+    <script src="js/opencv.js" defer></script>
+    <script src="js/jquery.min.js" defer></script>
+    <script src="js/bootstrap.bundle.min.js" defer></script>
+    <script src="js/jszip.min.js" defer></script>
+    <script src="js/image-filters.js" defer></script>
+
+    <!-- <script async src="js/opencv.js" id="opencv-script"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="js/jszip.min.js"></script>
-    <script src="js/image-filters.js"></script>
+    <script src="js/image-filters.js"></script> -->
 </body>
 
 </html>
