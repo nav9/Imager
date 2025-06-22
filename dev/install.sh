@@ -30,13 +30,13 @@ else
   echo "Bootstrap JS already exists."
 fi
 
-# glfx.js (for WebGL image filters) - Let's ensure we get the raw file
-if [ -f "$JS_DIR/glfx.js" ]; then
-    rm "$JS_DIR/glfx.js" # Remove potentially corrupted file
-fi
-echo "Downloading glfx.js..."
-curl -L "https://evanw.github.io/glfx.js/glfx.js" -o "$JS_DIR/glfx.js"
-#curl -L "https://raw.githubusercontent.com/evanw/glfx.js/master/glfx.js" -o "$JS_DIR/glfx.js"
+# # glfx.js (for WebGL image filters) - Let's ensure we get the raw file
+# if [ -f "$JS_DIR/glfx.js" ]; then
+#     rm "$JS_DIR/glfx.js" # Remove potentially corrupted file
+# fi
+# echo "Downloading glfx.js..."
+# curl -L "https://evanw.github.io/glfx.js/glfx.js" -o "$JS_DIR/glfx.js"
+# #curl -L "https://raw.githubusercontent.com/evanw/glfx.js/master/glfx.js" -o "$JS_DIR/glfx.js"
 
 
 # JSZip (for zipping and downloading files)
@@ -55,6 +55,14 @@ else
   echo "Cropper.js already exists."
 fi
 
+# OpenCV.js (for advanced image processing)
+# This is a large file, download may be slow.
+if [ ! -f "$JS_DIR/opencv.js" ]; then
+  echo "Downloading OpenCV.js (this may take a minute)..."
+  curl -L https://docs.opencv.org/4.9.0/opencv.js -o "$JS_DIR/opencv.js"
+else
+  echo "OpenCV.js already exists."
+fi
 
 # --- CSS FILES ---
 

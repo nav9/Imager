@@ -1,37 +1,59 @@
 $(document).ready(function() {
-    // --- Configuration ---
+    // --- Configuration for OpenCV Filters ---
     const FILTER_PARAMS = {
-        brightness: { min: -0.8, max: 0.8 },
-        contrast: { min: -0.8, max: 0.8 },
+        brightness: { min: -100, max: 100 }, // alpha is contrast, beta is brightness
+        contrast: { min: 1.0, max: 3.0 },
         gamma: { min: 0.2, max: 3.0 },
-        hue: { min: -1.0, max: 1.0 },
-        saturation: { min: -1.0, max: 1.0 },
-        vibrance: { min: -1.0, max: 1.0 },
-        sepia: { min: 0.1, max: 1.0 },
-        sharpen: { min: 0.1, max: 10.0 },
-        unsharpMask: { min: 0, max: 10, radius: 20 }, // radius is fixed for simplicity
-        noise: { min: 0.0, max: 0.5 },
-        denoise: { min: 1.0, max: 50.0 },
-        vignette: { min: 0.1, max: 0.8, size: 0.5 } // size can be fixed
+        saturation: { min: 0.0, max: 3.0 }, // Multiplier in HSV space
+        invert: { min: 0, max: 1 }, // Binary choice
+        threshold: { min: 50, max: 200 },
+        clahe: { min: 1.0, max: 10.0 }, // Clip limit
+        sharpen: { min: 0, max: 1 }, // Binary choice
+        blur: { min: 1, max: 15 }, // Kernel size (must be odd)
+        median: { min: 3, max: 15 }, // Kernel size (must be odd)
+        denoise: { min: 1, max: 21 }, // h value
+        canny: { min: 20, max: 100 }, // threshold1
+        sobel: { min: 1, max: 5 }, // ksize (must be odd)
+        erode: { min: 1, max: 9 }, // kernel size
+        dilate: { min: 1, max: 9 }, // kernel size
     };
 
     // --- State Variables ---
     let originalImage = null;
-    let canvas, texture;
+    let srcMat; // OpenCV matrix for the original image
     let population = [];
     let history = [];
     let currentHistoryIndex = -1;
     let globalBest = null;
+    let isProcessing = false;
+    let pageIsDirty = false;
+    let timerInterval;
+    let generationTimes = [];
 
     // --- DOM Elements ---
+    const $statusText = $('#status-text');
+    const $imageGrid = $('#image-grid');
+    const $overlay = $('#processing-overlay');
     const $imageUpload = $('#image-upload');
     const $imageUrl = $('#image-url');
     const $loadUrlBtn = $('#load-url-btn');
-    const $statusText = $('#status-text');
-    const $imageGrid = $('#image-grid');
     const $actionButtons = $('#try-again-btn, #reset-btn, #prev-btn, #next-btn, #compare-btn, #save-btn');
     const compareModal = new bootstrap.Modal(document.getElementById('compare-modal'));
 
+    // --- OpenCV Initialization ---
+    $('#opencv-script').on('load', () => {
+        if (cv.getBuildInformation) {
+            console.log("OpenCV.js is ready.");
+            $statusText.text("Ready. Please load an image to begin.");
+        } else {
+            // Fallback for some browsers
+            cv['onRuntimeInitialized'] = () => {
+                console.log("OpenCV.js is ready (onRuntimeInitialized).");
+                $statusText.text("Ready. Please load an image to begin.");
+            };
+        }
+    });
+        
     // --- Particle Class ---
     class Particle {
         constructor(filters) {
@@ -86,8 +108,13 @@ $(document).ready(function() {
         });
 
         // Event Handlers for buttons
-        $imageUpload.on('change', handleImageUpload);
-        $loadUrlBtn.on('click', handleImageUrl);
+        // Controls
+        $('#image-upload').on('change', handleImageUpload);
+        $('#select-all-filters').on('click', () => $('#filter-checkboxes input').prop('checked', true));
+        $('#select-none-filters').on('click', () => $('#filter-checkboxes input').prop('checked', false));
+
+        //$imageUpload.on('change', handleImageUpload);
+        //$loadUrlBtn.on('click', handleImageUrl);
         $('#try-again-btn').on('click', () => runEvolution(false));
         $('#reset-btn').on('click', () => runEvolution(true));
         $('#prev-btn').on('click', navigateHistory(-1));
@@ -100,77 +127,63 @@ $(document).ready(function() {
             $(this).find('.thumbnail').toggleClass('selected');
             updateActionButtons();
         });
+        // Unload warning
+        $(window).on('beforeunload', function() {
+            if (pageIsDirty) {
+                return "You have unsaved changes. Are you sure you want to leave?";
+            }
+        });        
     }
 
     // --- Image Handling ---
     function handleImageUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
-        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-            alert('Invalid file type. Please use JPEG, PNG, or WebP.');
-            return;
-        }
-        if (file.size > 15 * 1024 * 1024) { // 15MB limit
-             alert('File is too large (max 15MB).');
-             return;
-        }
         const reader = new FileReader();
         reader.onload = e => loadImage(e.target.result);
         reader.readAsDataURL(file);
     }
 
-    function handleImageUrl() {
-        const url = $imageUrl.val().trim();
-        if (!url) return;
-        $statusText.text('Loading from URL...').removeClass('text-danger');
-        $loadUrlBtn.prop('disabled', true);
+    // function handleImageUrl() {
+    //     const url = $imageUrl.val().trim();
+    //     if (!url) return;
+    //     $statusText.text('Loading from URL...').removeClass('text-danger');
+    //     $loadUrlBtn.prop('disabled', true);
         
-        // Very basic URL validation
-        if (!url.match(/^https?:\/\/.+\.(jpg|jpeg|png|webp)(\?.*)?$/i)) {
-             $statusText.text('Invalid image URL format.').addClass('text-danger');
-             $loadUrlBtn.prop('disabled', false);
-             return;
-        }
+    //     // Very basic URL validation
+    //     if (!url.match(/^https?:\/\/.+\.(jpg|jpeg|png|webp)(\?.*)?$/i)) {
+    //          $statusText.text('Invalid image URL format.').addClass('text-danger');
+    //          $loadUrlBtn.prop('disabled', false);
+    //          return;
+    //     }
         
-        // Use a CORS proxy for robustness
-        const proxyUrl = 'https://corsproxy.io/?';
-        loadImage(proxyUrl + url);
-    }
+    //     // Use a CORS proxy for robustness
+    //     const proxyUrl = 'https://corsproxy.io/?';
+    //     loadImage(proxyUrl + url);
+    // }
     
     function loadImage(src) {
         const image = new Image();
-        // image.crossOrigin = "Anonymous";
         image.onload = () => {
-            try {
-                if (!canvas) canvas = fx.canvas();
-                originalImage = image;
-                texture = canvas.texture(originalImage);
-                texture.loadContentsOf(originalImage);
-                $statusText.text('Image loaded. Ready to evolve.');
-                $loadUrlBtn.prop('disabled', false);
-                runEvolution(true); // Start the first generation
-            } catch (e) {
-                console.error(e);
-                alert("Could not initialize WebGL. Your browser may not support it, or the image could be corrupted.");
-                 $statusText.text('Error initializing image.').addClass('text-danger');
-                 $loadUrlBtn.prop('disabled', false);
-            }
-        };
-        image.onerror = () => {
-            $statusText.text('Failed to load image from URL. It may be blocked by CORS or is not a valid image.').addClass('text-danger');
-            $loadUrlBtn.prop('disabled', false);
+            originalImage = image;
+            if (srcMat) srcMat.delete(); // Clean up previous matrix
+            srcMat = cv.imread(originalImage);
+            pageIsDirty = true;
+            runEvolution(true); // Start the first generation
         };
         image.src = src;
     }
 
 
     // --- PSO & Evolution Logic ---
-    function runEvolution(isReset) {
-        if (!originalImage) {
-            alert("Please load an image first.");
-            return;
-        }
-        $statusText.text(`Evolving generation ${currentHistoryIndex + 2}...`);
+    async function runEvolution(isReset) {
+        if (!originalImage || isProcessing) return;
+        isProcessing = true;
+        showOverlay("Initializing...", "0.0s", "calculating...");
+        const startTime = performance.now();
+        startTimer(startTime);        
+        await yieldToMainThread(); // Let overlay render
+        $statusText.text(`Evolving generation ${currentHistoryIndex + 2}...`);        
         
         const selectedFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
         if (selectedFilters.length === 0) {
@@ -197,6 +210,10 @@ $(document).ready(function() {
         renderGrid();
         updateActionButtons();
         $statusText.text(`Generation ${currentHistoryIndex + 1}. Select the best images and click 'Try Again'.`);
+
+        stopTimer(startTime);
+        hideOverlay();
+        isProcessing = false;        
     }
     
     function initializePopulation(filters) {
@@ -292,6 +309,37 @@ $(document).ready(function() {
         chain.update();
         return canvas;
     }
+
+    // --- OpenCV Filter Application ---
+    function applyAllFilters(position) {
+        let tempMat = srcMat.clone();
+        
+        // --- IMPORTANT: Filters must be applied in a logical order ---
+        // For example: denoise first, then color/contrast, then sharpen
+        
+        // Pre-processing
+        if (position.denoise) { /* ... cv.fastNlMeansDenoisingColored ... */ }
+        if (position.blur) { /* ... cv.GaussianBlur ... */ }
+        if (position.median) { /* ... cv.medianBlur ... */ }
+        
+        // Color & Contrast
+        if (position.brightness || position.contrast) {
+            tempMat.convertTo(tempMat, -1, position.contrast || 1.0, position.brightness || 0);
+        }
+        if (position.clahe) { /* ... cv.createCLAHE, clahe.apply ... */ }
+        if (position.saturation) { /* ... cv.cvtColor(tempMat, hsv, cv.COLOR_RGB2HSV); ... process ... cv.cvtColor back */ }
+        
+        // Post-processing
+        if (position.sharpen) {
+             let kernel = cv.matFromArray(3, 3, cv.CV_32F, [0, -1, 0, -1, 5, -1, 0, -1, 0]);
+             cv.filter2D(tempMat, tempMat, cv.CV_8U, kernel);
+             kernel.delete();
+        }
+        // ... etc for all other filters ...
+        
+        return tempMat;
+    }
+        
     
     function navigateHistory(direction) {
         return () => {
@@ -388,6 +436,36 @@ $(document).ready(function() {
             $statusText.text("Download complete.");
         });
     }
+
+    // --- UI Helpers & Timers ---
+    function showOverlay(status, time, eta) {
+        $('#processing-status').text(status);
+        $('#processing-timer').text(`Time elapsed: ${time}`);
+        $('#processing-eta').text(`ETA: ${eta}`);
+        $overlay.removeClass('d-none');
+    }
+
+    function hideOverlay() { $overlay.addClass('d-none'); }
+    
+    function updateOverlayStatus(status) { $('#processing-status').text(status); }
+
+    function startTimer(startTime) {
+        timerInterval = setInterval(() => {
+            const elapsed = ((performance.now() - startTime) / 1000).toFixed(1);
+            $('#processing-timer').text(`Time elapsed: ${elapsed}s`);
+        }, 100);
+    }
+    
+    function stopTimer(startTime) {
+        clearInterval(timerInterval);
+        const totalTime = (performance.now() - startTime) / 1000;
+        generationTimes.push(totalTime);
+        // ... (calculate and display ETA for next run)
+    }
+
+    async function yieldToMainThread() {
+        return new Promise(resolve => setTimeout(resolve, 0));
+    }    
 
     // --- Start the App ---
     init();

@@ -7,6 +7,8 @@ $(document).ready(function() {
     const $fileCount = $('#file-count');
     const $status = $('#status');
 
+    const BATCH_SIZE = 10; // Process 10 images at a time
+
     // Toggle input sections based on radio selection
     $('input[name="resize-method"]').on('change', function() {
         if (this.value === 'dims') {
@@ -40,6 +42,10 @@ $(document).ready(function() {
             alert('No files selected.');
             return;
         }
+
+        // const filesToProcess = [...imageFiles]; // Create a copy
+        // const totalBatches = Math.ceil(filesToProcess.length / BATCH_SIZE);
+        // let currentBatch = 1;        
 
         const method = $('input[name="resize-method"]:checked').val();
         const targetWidth = parseInt($('#resize-width').val());
