@@ -46,9 +46,7 @@ class Particle {
         const { w, c1, c2 } = psoParams;
         for (let i = 0; i < this.position.length; i++) {
             const r1 = Math.random(), r2 = Math.random();
-            this.velocity[i] = (w * this.velocity[i]) +
-                              (c1 * r1 * (this.pbest.position[i] - this.position[i])) +
-                              (c2 * r2 * (gbestPosition[i] - this.position[i]));
+            this.velocity[i] = (w * this.velocity[i]) + (c1 * r1 * (this.pbest.position[i] - this.position[i])) + (c2 * r2 * (gbestPosition[i] - this.position[i]));
             this.position[i] += this.velocity[i];
             this.position[i] = Math.max(0, Math.min(1, this.position[i])); // Clamp
         }
