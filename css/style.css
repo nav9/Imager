@@ -91,7 +91,8 @@ body {
     object-fit: cover;
 }
 .thumbnail.selected {
-    border-color: var(--bs-primary);
+    border: 4px solid #FFC107; /* A thick, vibrant yellow */
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.5);
 }
 
 /* --- Processing Overlay --- */

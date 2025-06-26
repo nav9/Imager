@@ -1,0 +1,1 @@
+Failed to fetch version info for alicelab/bmp-js.

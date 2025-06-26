@@ -1,5 +1,13 @@
 #!/bin/bash
 
+echo "-----------------------------------------------------"
+echo "-----------------------------------------------------"
+echo "-----------------------------------------------------"
+echo "NOTE: This script needs to be run from the dev folder"
+echo "-----------------------------------------------------"
+echo "-----------------------------------------------------"
+echo "-----------------------------------------------------"
+
 # Define the target directory for JavaScript and CSS files
 JS_DIR="../js"
 CSS_DIR="../css"
@@ -55,6 +63,14 @@ else
   echo "Cropper.js already exists."
 fi
 
+# Cropper CSS
+if [ ! -f "$CSS_DIR/cropper.min.css" ]; then
+  echo "Downloading Cropper.js CSS..."
+  curl -L https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css -o "$CSS_DIR/cropper.min.css"
+else
+  echo "Cropper.js CSS already exists."
+fi
+
 # OpenCV.js (for advanced image processing)
 # This is a large file, download may be slow.
 if [ ! -f "$JS_DIR/opencv.js" ]; then
@@ -62,6 +78,30 @@ if [ ! -f "$JS_DIR/opencv.js" ]; then
   curl -L https://docs.opencv.org/4.9.0/opencv.js -o "$JS_DIR/opencv.js"
 else
   echo "OpenCV.js already exists."
+fi
+
+# UTIF.js for TIFF encoding
+if [ ! -f "$JS_DIR/UTIF.js" ]; then
+  echo "Downloading UTIF.js for TIFF support..."
+  curl -L https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js -o "$JS_DIR/UTIF.js"
+else
+  echo "UTIF.js already exists."
+fi
+
+# A library for BMP encoding
+if [ ! -f "$JS_DIR/bmp.js" ]; then
+  echo "Downloading bmp.js for BMP support..."
+  curl -L "https://cdn.jsdelivr.net/gh/alicelab/bmp-js@main/bmp.js" -o "$JS_DIR/bmp.js"
+else
+  echo "bmp.js already exists."
+fi
+
+# A library for GIF encoding (omggif)
+if [ ! -f "$JS_DIR/omggif.js" ]; then
+  echo "Downloading omggif.js for GIF support..."
+  curl -L "https://cdn.jsdelivr.net/npm/omggif@1.0.10/omggif.js" -o "$JS_DIR/omggif.js"
+else
+  echo "omggif.js already exists."
 fi
 
 # --- CSS FILES ---
@@ -102,13 +142,7 @@ else
   echo "Bootstrap Icons WOFF Font already exists."
 fi
 
-# Cropper.js CSS
-if [ ! -f "$CSS_DIR/cropper.min.css" ]; then
-  echo "Downloading Cropper.js CSS..."
-  curl -L https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css -o "$CSS_DIR/cropper.min.css"
-else
-  echo "Cropper.js CSS already exists."
-fi
+
 
 echo "----------------------------------------"
 echo "Installation complete."
