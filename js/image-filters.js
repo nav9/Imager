@@ -5,22 +5,26 @@
 // A $(document).ready() block is not needed because the script is deferred.
 
 // --- Configuration ---
+const BRIGHTNESS = 'Brightness'; const CONTRAST = 'Contrast'; const GAMMA = 'Gamma'; const SATURATION = 'Saturation'
+const CLAHE = 'CLAHE'; const BLUR = 'Blur'; const MEDIAN = 'Median'; const SHARPEN = 'Sharpen'; const DENOISE = 'Denoise'
+const CANNY = 'Canny'; const SOBEL = 'Sobel'; const ERODE = 'Erode'; const DILATE = 'Dilate'; const THRESHOLD = 'Threshold'
+const INVERT = 'Invert';
 const ALL_FILTERS = {
-    brightness: { min: -100, max: 100, name: "Brightness" },
-    contrast: { min: 1.0, max: 3.0, name: "Contrast" },
-    gamma: { min: 0.2, max: 3.0, name: "Gamma" },
-    saturation: { min: 0.0, max: 3.0, name: "Saturation" },
-    clahe: { min: 1.0, max: 10.0, name: "CLAHE" },
-    blur: { min: 1, max: 15, name: "Blur" },
-    median: { min: 3, max: 15, name: "Median" },
-    sharpen: { min: 0, max: 1, name: "Sharpen" },
-    denoise: { min: 1, max: 21, name: "Denoise" },
-    canny: { min: 20, max: 100, name: "Canny Edges" },
-    sobel: { min: 1, max: 5, name: "Sobel Edges" },
-    erode: { min: 1, max: 9, name: "Erode" },
-    dilate: { min: 1, max: 9, name: "Dilate" },
-    threshold: { min: 50, max: 200, name: "Threshold" },
-    invert: { min: 0, max: 1, name: "Invert" },
+    brightness: { min: -100, max: 100, name: BRIGHTNESS },
+    contrast: { min: 1.0, max: 3.0, name: CONTRAST },
+    gamma: { min: 0.2, max: 3.0, name: GAMMA },
+    saturation: { min: 0.0, max: 3.0, name: SATURATION },
+    clahe: { min: 1.0, max: 10.0, name: CLAHE },
+    blur: { min: 1, max: 15, name: BLUR },
+    median: { min: 3, max: 15, name: MEDIAN },
+    sharpen: { min: 0, max: 1, name: SHARPEN },
+    denoise: { min: 1, max: 21, name: DENOISE },
+    canny: { min: 20, max: 100, name: CANNY },
+    sobel: { min: 1, max: 5, name: SOBEL },
+    erode: { min: 1, max: 9, name: ERODE },
+    dilate: { min: 1, max: 9, name: DILATE },
+    threshold: { min: 50, max: 200, name: THRESHOLD },
+    invert: { min: 0, max: 1, name: INVERT },
 };
 const MAX_FILTER_CHAIN_LENGTH = 8;
 
@@ -41,12 +45,10 @@ class Particle {
         this.position = []; this.velocity = [];
         this.pbest = { position: [], fitness: Infinity };
         this.fitness = Infinity;
-        // The position vector holds the 'recipe' for the filter chain.
-        // Each step has 3 dimensions: [filter_type, filter_value, is_active]
-        // All values are normalized between 0 and 1 for the PSO algorithm.
+        // The position vector holds the 'recipe' for the filter chain. Each step has 3 dimensions: [filter_type, filter_value, is_active]. All values are normalized between 0 and 1 for the PSO algorithm.
         for (let i = 0; i < MAX_FILTER_CHAIN_LENGTH; i++) {
-            this.position.push(Math.random(), Math.random(), Math.random());
-            this.velocity.push(0, 0, 0);
+            this.position.push(Math.random(), Math.random(), Math.random());//[filter_type, filter_value, is_active]
+            this.velocity.push(0, 0, 0);//[filter_type, filter_value, is_active]
         }
     }
     update(gbestPosition, psoParams) {
@@ -56,8 +58,7 @@ class Particle {
             // Standard PSO equations
             this.velocity[i] = (w * this.velocity[i]) + (c1 * r1 * (this.pbest.position[i] - this.position[i])) + (c2 * r2 * (gbestPosition[i] - this.position[i]));
             this.position[i] += this.velocity[i];
-            // Clamp position to the normalized [0, 1] range. The actual filter values
-            // are calculated from this normalized value when they are applied.
+            // Clamp position to the normalized [0, 1] range. The actual filter values are calculated from this normalized value when they are applied.
             this.position[i] = Math.max(0, Math.min(1, this.position[i]));
         }
     }
@@ -68,8 +69,8 @@ function init() {
     populateFilterCheckboxes();
     updateButtonStates();
     setupEventListeners();
-    const cvReadyCheck = setInterval(() => {
-        if (typeof cv !== 'undefined' && cv.getBuildInformation) {
+    const cvReadyCheck = setInterval(() => {//checks whether the OpenCV library (referred to as cv) has been loaded and is ready to use
+        if (typeof cv !== 'undefined' && cv.getBuildInformation) {//checks if the cv object has the method getBuildInformation (which indicates that OpenCV has been fully initialized)
             clearInterval(cvReadyCheck);
             $statusText.text("Ready. Please select an image to begin.");
             $('#image-upload').prop('disabled', false);
@@ -79,7 +80,8 @@ function init() {
 
 function populateFilterCheckboxes() {
     Object.entries(ALL_FILTERS).forEach(([value, { name }]) => {
-        $filterCheckboxesContainer.append(`<div class="form-check"><input class="form-check-input" type="checkbox" value="${value}" id="cb-${value}" checked><label class="form-check-label" for="cb-${value}">${name}</label></div>`);
+        const isChecked = (name === GAMMA || name === BRIGHTNESS || name === CONTRAST) ? 'checked' : '';
+        $filterCheckboxesContainer.append(`<div class="form-check"><input class="form-check-input" type="checkbox" value="${value}" id="cb-${value}" ${isChecked}><label class="form-check-label" for="cb-${value}">${name}</label></div>`);
     });
 }
 
@@ -105,24 +107,16 @@ function setupEventListeners() {
     $historyDropdown.on('change', loadFromHistory);
     $('#compare-btn').on('click', showCompareModal);
     $('#save-btn').on('click', saveSelectedImages);
-
-    $imageGrid.on('click', '.thumbnail-container', function() {
-        $(this).find('.thumbnail').toggleClass('selected');
-        updateButtonStates();
-    });
+    $imageGrid.on('click', '.thumbnail-container', function() {$(this).find('.thumbnail').toggleClass('selected'); updateButtonStates();});
     $(window).on('beforeunload', () => pageIsDirty ? "You have unsaved changes. Are you sure you want to leave?" : undefined);
 
 }
-
 
 // --- Image Handling & Failsafes ---
 function handleImageUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-        alert("Invalid file type. Please select an image.");
-        return;
-    }
+    if (!file.type.startsWith('image/')) {alert("Invalid file type. Please select an image."); return;}
     const reader = new FileReader();
     reader.onload = event => {
         originalImage = new Image();
@@ -144,10 +138,7 @@ function handleImageUpload(e) {
     reader.readAsDataURL(file);
 }
 
-function handleFilterSelection(e) {
-    $('#filter-checkboxes input').prop('checked', e.currentTarget.id === 'select-all-filters');
-}
-
+function handleFilterSelection(e) {$('#filter-checkboxes input').prop('checked', e.currentTarget.id === 'select-all-filters');}
 
 function handlePopulationChange() {
     if (isProcessing || population.length === 0) return;
@@ -155,22 +146,13 @@ function handlePopulationChange() {
     const oldSize = population.length;
     const availableFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
     
-    if (newSize > oldSize) {
-        for (let i = 0; i < newSize - oldSize; i++) {
-            population.push(new Particle(availableFilters));
-        }
-    } else if (newSize < oldSize) {
-        // FIX: Sort by fitness before slicing to keep the best particles.
-        population.sort((a, b) => a.fitness - b.fitness);
-        population = population.slice(0, newSize);
-    }
+    if (newSize > oldSize) {for (let i = 0; i < newSize - oldSize; i++) {population.push(new Particle(availableFilters));}} 
+    else if (newSize < oldSize) {population.sort((a, b) => a.fitness - b.fitness); population = population.slice(0, newSize);}
     $statusText.text(`Population size set to ${newSize}.`);
 }
 
 function handleReset(isNewImage = false) {
-    if (!isNewImage && !confirm("Are you sure you want to reset? This will clear all history.")) {
-        return;
-    }
+    if (!isNewImage && !confirm("Are you sure you want to reset? This will clear all history.")) {return;}
     history = [];
     $historyDropdown.html('<option>History</option>').val("History");
     runEvolution(true);
@@ -187,40 +169,23 @@ async function runEvolution(isReset) {
     await new Promise(resolve => setTimeout(resolve, 50));
 
     const availableFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
-    if (availableFilters.length === 0) {
-        alert("Please select at least one filter type to use for evolution.");
-        cancelProcessing(startTime); return;
-    }
+    if (availableFilters.length === 0) {alert("Please select at least one filter type to use for evolution.");cancelProcessing(startTime); return;}
 
     if (isReset) {
         globalBest = null;
         const popSize = parseInt($('#num-images-slider').val());
         population = Array.from({ length: popSize }, () => new Particle(availableFilters));
-    } else {
-        updatePopulationState(availableFilters);
-    }
+    } else {updatePopulationState(availableFilters);}
     
-    // FIX: Store the full context for the generation in history
     history.push({
         population: JSON.parse(JSON.stringify(population)),
-        psoParams: {
-            inertia: $('#inertia-slider').val(),
-            cognition: $('#cognition-slider').val(),
-            social: $('#social-slider').val(),
-        },
+        psoParams: {inertia: $('#inertia-slider').val(), cognition: $('#cognition-slider').val(), social: $('#social-slider').val(),},
         previewSize: $('#preview-size-slider').val(),
         availableFilters: availableFilters
     });
     updateHistoryDropdown(history.length);
-
-    await processAndRenderPopulation(population, `Processing Generation ${history.length}`, availableFilters);
-    
-    if (isProcessing) {
-        pageIsDirty = true;
-        $statusText.text(`Generation ${history.length} complete. Select your favorites and click 'Evolve'.`);
-    } else {
-        $statusText.text("Processing cancelled by user.");
-    }
+    await processAndRenderPopulation(population, `Processing Generation ${history.length}`, availableFilters);    
+    if (isProcessing) {pageIsDirty = true; $statusText.text(`Generation ${history.length} complete. Select your favorites and click 'Evolve'.`);} else {$statusText.text("Processing cancelled by user.");}
     cancelProcessing(startTime);
 }
 
@@ -253,23 +218,20 @@ function updatePopulationState(availableFilters) {
     };
     const selectedIndices = $('.thumbnail.selected').map((_, el) => $(el).data('index')).get();
 
-    // Re-initialize unselected particles if the filter set has changed
-    // This allows the swarm to adapt to new user constraints.
+    // Re-initialize unselected particles if the filter set has changed. This allows the swarm to adapt to new user constraints.
     population.forEach((p, i) => {
         const isSelected = selectedIndices.includes(i);
-        if (!isSelected) {
-            population[i] = new Particle(availableFilters);
-        }
+        if (!isSelected) {population[i] = new Particle(availableFilters);}
     });
 
     if (selectedIndices.length > 0) {
         // Calculate fitness for the selected particles
-        population.forEach((p, i) => {
-            const fitness = selectedIndices.indexOf(i);
-            p.fitness = (fitness !== -1) ? fitness : Infinity;
-            if (p.fitness < p.pbest.fitness) {
-                p.pbest.fitness = p.fitness;
-                p.pbest.position = JSON.parse(JSON.stringify(p.position));
+        population.forEach((p, i) => {//Iterates over each individual p in the population array. i is the current index of the individual in the array.        
+            const fitness = selectedIndices.indexOf(i);//Checks if the current individual's index i is present in the selectedIndices array.If i is found, fitness is set to its position in selectedIndices (a number ≥ 0). If not found, fitness will be -1.
+            p.fitness = (fitness !== -1) ? fitness : Infinity;//If i was found in selectedIndices, set p.fitness to that index value. If not found, assign Infinity (indicating a very poor or invalid fitness).
+            if (p.fitness < p.pbest.fitness) {//Checks if the current p.fitness is better (i.e., numerically lower) than the individual's personal best p.pbest.fitness.
+                p.pbest.fitness = p.fitness;//If so, updates the individual's personal best fitness to the current fitness.
+                p.pbest.position = JSON.parse(JSON.stringify(p.position));//Creates a deep copy of the current position p.position and assigns it to p.pbest.position. Ensures that the personal best position remains unchanged even if p.position is modified later.
             }
         });
 
@@ -278,34 +240,25 @@ function updatePopulationState(availableFilters) {
         
         // Update the global best if the new best is better
         if (fittestParticle) {
-             if (!globalBest || fittestParticle.fitness < globalBest.fitness) {
-                globalBest = JSON.parse(JSON.stringify(fittestParticle));
-            }
+             if (!globalBest || fittestParticle.fitness < globalBest.fitness) {globalBest = JSON.parse(JSON.stringify(fittestParticle));}
         }
     }
     
-    if (!globalBest) {
-        // If there's no global best yet (e.g., first "Evolve" with no selection),
-        // we can't evolve. Just keep the re-initialized random particles.
-        $statusText.text("No selection made. Evolving with new random variations.");
-    } else {
-        // Evolve ALL particles (both selected and newly randomized ones) toward the global best
-        population.forEach(p => p.update(globalBest.pbest.position, psoParams));
-    }
+    if (!globalBest) {$statusText.text("No selection made. Evolving with new random variations.");} // If there's no global best yet (e.g., first "Evolve" with no selection), we can't evolve. Just keep the re-initialized random particles.
+    else {population.forEach(p => p.update(globalBest.pbest.position, psoParams));}// Evolve ALL particles (both selected and newly randomized ones) toward the global best
 }
 
 // --- Filter Application (Complete and Corrected) ---
 function applyFilterSequence(position, availableFilters) {
     let tempMat = srcMat.clone();
     let sequence = [];
-    const usedFilters = new Set(); // FIX: Ensure unique filters per chain
+    const usedFilters = new Set(); 
 
     for (let i = 0; i < MAX_FILTER_CHAIN_LENGTH; i++) {
         if (position[i * 3 + 2] > 0.5) { // Is this step active?
             const filterIndex = Math.floor(position[i * 3 + 0] * availableFilters.length);
             const filterName = availableFilters[filterIndex];
             
-            // FIX: Check if filter has already been used in this particle's chain
             if (filterName && !usedFilters.has(filterName)) {
                 usedFilters.add(filterName);
                 const normalizedValue = position[i * 3 + 1];
@@ -319,69 +272,66 @@ function applyFilterSequence(position, availableFilters) {
     sequence.forEach(step => {
         try {
             switch(step.op) {
-                case 'gamma': {
-                    // FIX: Use a fast Look-Up Table (LUT) for gamma correction
+                case GAMMA: {
                     if (step.val > 0) {
                         const gamma = 1.0 / step.val;
                         const lookUpTable = new Uint8Array(256);
-                        for (let i = 0; i < 256; i++) {
-                            lookUpTable[i] = Math.pow(i / 255.0, gamma) * 255;
-                        }
+                        for (let i = 0; i < 256; i++) {lookUpTable[i] = Math.pow(i / 255.0, gamma) * 255;}
                         let lutMat = cv.matFromArray(1, 256, cv.CV_8U, lookUpTable);
                         cv.LUT(tempMat, lutMat, tempMat);
                         lutMat.delete();
                     }
                     break;
                 }
-                case 'brightness': tempMat.convertTo(tempMat, -1, 1.0, step.val); break;
-                case 'contrast': tempMat.convertTo(tempMat, -1, step.val, 0); break;       
-                case 'saturation': {
+                case BRIGHTNESS: tempMat.convertTo(tempMat, -1, 1.0, step.val); break;
+                case CONTRAST: tempMat.convertTo(tempMat, -1, step.val, 0); break;       
+                case SATURATION: {
                     let hsv = new cv.Mat(); cv.cvtColor(tempMat, hsv, cv.COLOR_RGBA2RGB); cv.cvtColor(hsv, hsv, cv.COLOR_RGB2HSV);
                     let planes = new cv.MatVector(); cv.split(hsv, planes); let s = planes.get(1);
                     s.convertTo(s, -1, step.val, 0); cv.merge(planes, hsv);
                     cv.cvtColor(hsv, tempMat, cv.COLOR_HSV2RGB); cv.cvtColor(tempMat, tempMat, cv.COLOR_RGB2RGBA);
                     hsv.delete(); planes.delete(); s.delete(); break;
                 }
-                case 'clahe': {
+                case CLAHE: {
                     gray = new cv.Mat(); cv.cvtColor(tempMat, gray, cv.COLOR_RGBA2GRAY, 0);
                     let clahe = cv.createCLAHE(step.val, new cv.Size(8, 8)); clahe.apply(gray, gray);
                     cv.cvtColor(gray, tempMat, cv.COLOR_GRAY2RGBA, 0); clahe.delete(); gray.delete(); gray = null; break;
                 }
-                case 'blur': case 'median': {
+                case BLUR: case 'median': {
                     let ksize = Math.floor(step.val / 2) * 2 + 1;
                     if (step.op === 'blur') cv.GaussianBlur(tempMat, tempMat, new cv.Size(ksize, ksize), 0);
                     else cv.medianBlur(tempMat, tempMat, ksize); break;
                 }
-                case 'sharpen': {
+                case SHARPEN: {
                     if (step.val > 0.5) {
                         let kernel = cv.matFromArray(3, 3, cv.CV_32F, [0, -1, 0, -1, 5, -1, 0, -1, 0]);
                         cv.filter2D(tempMat, tempMat, -1, kernel); kernel.delete();
                     } break;
                 }
-                case 'denoise': cv.fastNlMeansDenoisingColored(tempMat, tempMat, step.val, step.val, 7, 21); break;
-                case 'canny': {
+                case DENOISE: cv.fastNlMeansDenoisingColored(tempMat, tempMat, step.val, step.val, 7, 21); break;
+                case CANNY: {
                     gray = new cv.Mat(); cv.cvtColor(tempMat, gray, cv.COLOR_RGBA2GRAY, 0);
                     cv.Canny(gray, gray, step.val, step.val * 2); cv.cvtColor(gray, tempMat, cv.COLOR_GRAY2RGBA, 0);
                     gray.delete(); gray = null; break;
                 }
-                case 'sobel': {
+                case SOBEL: {
                     gray = new cv.Mat(); cv.cvtColor(tempMat, gray, cv.COLOR_RGBA2GRAY, 0);
                     let ksize = Math.floor(step.val / 2) * 2 + 1; let gradX = new cv.Mat(); let gradY = new cv.Mat();
                     cv.Sobel(gray, gradX, cv.CV_8U, 1, 0, ksize); cv.Sobel(gray, gradY, cv.CV_8U, 0, 1, ksize);
                     cv.addWeighted(gradX, 0.5, gradY, 0.5, 0, gray); cv.cvtColor(gray, tempMat, cv.COLOR_GRAY2RGBA, 0);
                     gradX.delete(); gradY.delete(); gray.delete(); gray = null; break;
                 }
-                case 'erode': case 'dilate': {
+                case ERODE: case 'dilate': {
                     let ksize = Math.floor(step.val); let kernel = cv.Mat.ones(ksize, ksize, cv.CV_8U);
                     if (step.op === 'erode') cv.erode(tempMat, tempMat, kernel); else cv.dilate(tempMat, tempMat, kernel);
                     kernel.delete(); break;
                 }
-                case 'threshold': {
+                case THRESHOLD: {
                     cv.cvtColor(tempMat, tempMat, cv.COLOR_RGBA2GRAY);
                     cv.threshold(tempMat, tempMat, step.val, 255, cv.THRESH_BINARY);
                     cv.cvtColor(tempMat, tempMat, cv.COLOR_GRAY2RGBA); break;
                 }
-                case 'invert': { if (step.val > 0.5) cv.bitwise_not(tempMat, tempMat); break; }
+                case INVERT: { if (step.val > 0.5) cv.bitwise_not(tempMat, tempMat); break; }
             }
         } catch (err) { console.error(`Failed to apply filter ${step.op}:`, err); }
     });
@@ -411,9 +361,7 @@ async function loadFromHistory() {
     startTimer(startTime);
     showOverlay(statusPrefix, "0.0s", "...");
     await new Promise(resolve => setTimeout(resolve, 50));
-    
     await processAndRenderPopulation(historicState.population, statusPrefix, historicState.availableFilters);
-    
     $statusText.text(`Viewing Generation ${selectedIndex + 1}. You can Evolve from this state or choose another from History.`);
     cancelProcessing(startTime);
 }
@@ -450,9 +398,7 @@ function showCompareModal() {
     if (selected.length === 0) return;
 
     let currentIndex = 0;
-    const selectedData = selected.map(function() {
-        return { src: $(this).find('img').attr('src'), caption: $(this).attr('data-bs-original-title') };
-    }).get();
+    const selectedData = selected.map(function() {return { src: $(this).find('img').attr('src'), caption: $(this).attr('data-bs-original-title') };}).get();
     
     $modalArea.html(`
         <div class="col-6 d-flex flex-column align-items-center">
@@ -516,19 +462,13 @@ function updateButtonStates() {
     const anySelected = $imageGrid.find('.thumbnail.selected').length > 0;
     const anyFilterSelected = $filterCheckboxesContainer.find('input:checked').length > 0;
 
-    if (isProcessing) {
-        $('button, input').not('#cancel-processing-btn').prop('disabled', true);
-        return;
-    }
-    
+    if (isProcessing) {$('button, input').not('#cancel-processing-btn').prop('disabled', true); return;}
     $('button, input').prop('disabled', false);
     $('#image-upload').prop('disabled', typeof cv === 'undefined' || isProcessing);
     
-    if (!imageLoaded) {
-        // Disable almost everything if no image is loaded
-        $('#try-again-btn, #reset-btn, #history-dropdown, #compare-btn, #save-btn').prop('disabled', true);
+    if (!imageLoaded) {        
+        $('#try-again-btn, #reset-btn, #history-dropdown, #compare-btn, #save-btn').prop('disabled', true);// Disable almost everything if no image is loaded
     } else {
-        // FIX: Also check if any filters are selected for evolution buttons
         $('#try-again-btn, #reset-btn').prop('disabled', !anyFilterSelected);
         $('#compare-btn, #save-btn').prop('disabled', !anySelected);
         $historyDropdown.prop('disabled', history.length === 0);
@@ -536,7 +476,6 @@ function updateButtonStates() {
 }
 
 // All other helper functions for timers and overlay are included here.
-
 function showOverlay(status, time, eta) {
     $('#processing-status').text(status);
     $('#processing-timer').text(`Time elapsed: ${time}`);
@@ -567,9 +506,7 @@ function calculateETA() {
     return `~${avgTime.toFixed(1)}s`;
 }
 
-
-// Start the application
-init();
+init();// Start the application
 
 
 // // A $(document).ready() block is not needed because the script is deferred.
