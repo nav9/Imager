@@ -16,6 +16,11 @@ const FILTER_DIMENSIONS = {
     VALUE: 1,   // The filter's parameter value (normalized)
     ACTIVE: 2   // Whether this step in the chain is enabled (0-1)
 };
+let lastAppliedPSOState = {
+    psoParams: { w: 0, c1: 0, c2: 0 },
+    availableFilters: [],
+    popSize: 0
+};
 const FILTER_ITEM_SIZE = Object.keys(FILTER_DIMENSIONS).length;
 const BRIGHTNESS = 'Brightness'; const CONTRAST = 'Contrast'; const GAMMA = 'Gamma'; const SATURATION = 'Saturation'
 const CLAHE = 'CLAHE'; const BLUR = 'Blur'; const MEDIAN = 'Median'; const SHARPEN = 'Sharpen'; const DENOISE = 'Denoise'
@@ -74,9 +79,7 @@ class Particle {
             this.position[i * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.ACTIVE] = Math.random();
             
             // Initialize velocity for each dimension
-            for (let j = 0; j < FILTER_ITEM_SIZE; j++) {
-                this.velocity.push(0);
-            }
+            for (let j = 0; j < FILTER_ITEM_SIZE; j++) {this.velocity.push(0);}
         }
     }
 
@@ -85,14 +88,9 @@ class Particle {
         for (let i = 0; i < this.position.length; i++) {
             const r1 = Math.random(), r2 = Math.random();
             // Standard PSO equations
-            this.velocity[i] = (w * this.velocity[i]) +
-                              (c1 * r1 * (this.pbest.position[i] - this.position[i])) +
-                              (c2 * r2 * (gbestPosition[i] - this.position[i]));
-            this.position[i] += this.velocity[i];
-            
-            // The PSO operates on a normalized [0, 1] space.
-            // This clamping is correct. The specific value constraints for each
-            // filter type are handled during the 'applyFilterSequence' step.
+            this.velocity[i] = (w * this.velocity[i]) + (c1 * r1 * (this.pbest.position[i] - this.position[i])) + (c2 * r2 * (gbestPosition[i] - this.position[i]));
+            this.position[i] += this.velocity[i];            
+            // The PSO operates on a normalized [0, 1] space. This clamping is correct. The specific value constraints for each filter type are handled during the 'applyFilterSequence' step.
             this.position[i] = Math.max(0, Math.min(1, this.position[i]));
         }
     }
@@ -122,8 +120,7 @@ function createLogModal() {
                         <h5 class="modal-title" id="logModalLabel">Status Log</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body" id="log-modal-body">
-                        </div>
+                    <div class="modal-body" id="log-modal-body"></div>
                 </div>
             </div>
         </div>`;
@@ -167,16 +164,13 @@ function setupEventListeners() {
 function updateStatus(message, isProcessingUpdate = false) {
     $statusText.text(message);
     // Only add significant, non-spammy messages to the log
-    if (!isProcessingUpdate) {
-        statusLog.unshift({ time: new Date().toLocaleTimeString(), msg: message });
-    }
+    if (!isProcessingUpdate) {statusLog.unshift({ time: new Date().toLocaleTimeString(), msg: message });}
 }
 
 function showLogModal() {
     const $logBody = $('#log-modal-body');
-    if (statusLog.length === 0) {
-        $logBody.html('<p class="text-muted">No log messages yet.</p>');
-    } else {
+    if (statusLog.length === 0) {$logBody.html('<p class="text-muted">No log messages yet.</p>');} 
+    else {
         const logHTML = statusLog.map(entry => `<p class="mb-1"><span class="badge bg-secondary me-2">${entry.time}</span>${entry.msg}</p>`).join('');
         $logBody.html(logHTML);
     }
@@ -322,45 +316,200 @@ function areMatsIdentical(mat1, mat2) {
     // If the loop completes without finding any differences, the matrices are identical.
     return true;
 }
-// --- Corrected PSO Evolution Logic ---
-function updatePopulationState(availableFilters) {//gets values from sliders, selected image indices, reinitializes unselected particles, 
-    const psoParams = {
+// --- PSO Evolution Logic ---
+async function updatePopulationState() {
+    const currentPopSize = parseInt($('#num-images-slider').val());
+    const currentAvailableFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
+    const currentPsoParams = {
         w: parseFloat($('#inertia-slider').val()),
         c1: parseFloat($('#cognition-slider').val()),
         c2: parseFloat($('#social-slider').val())
     };
+
     const selectedIndices = $('.thumbnail.selected').map((_, el) => $(el).data('index')).get();
 
-    //TODO: ADD CONDITION HERE TO CHECK IF FILTER SET WAS CHANGED
-    // Re-initialize unselected particles if the filter set has changed. This allows the swarm to adapt to new user constraints.
-    population.forEach((p, i) => {
-        const isSelected = selectedIndices.includes(i);
-        if (!isSelected) {population[i] = new Particle(availableFilters);}
-    });
+    // Determine if PSO parameters or available filters have changed
+    const psoParamsChanged = (
+        currentPsoParams.w !== lastAppliedPSOState.psoParams.w ||
+        currentPsoParams.c1 !== lastAppliedPSOState.psoParams.c1 ||
+        currentPsoParams.c2 !== lastAppliedPSOState.psoParams.c2
+    );
+    const filterSetChanged = (
+        currentAvailableFilters.length !== lastAppliedPSOState.availableFilters.length ||
+        currentAvailableFilters.some(filter => !lastAppliedPSOState.availableFilters.includes(filter))
+    );
+    const popSizeChanged = currentPopSize !== lastAppliedPSOState.popSize;
 
-    if (selectedIndices.length > 0) {
-        // Calculate fitness for the selected particles
-        population.forEach((p, i) => {//Iterates over each individual p in the population array. i is the current index of the individual in the array.        
-            const fitness = selectedIndices.indexOf(i);//Checks if the current individual's index i is present in the selectedIndices array.If i is found, fitness is set to its position in selectedIndices (a number ≥ 0). If not found, fitness will be -1.
-            p.fitness = (fitness !== -1) ? fitness : Infinity;//If i was found in selectedIndices, set p.fitness to that index value. If not found, assign Infinity (indicating a very poor or invalid fitness).
-            if (p.fitness < p.pbest.fitness) {//Checks if the current p.fitness is better (i.e., numerically lower) than the individual's personal best p.pbest.fitness.
-                p.pbest.fitness = p.fitness;//If so, updates the individual's personal best fitness to the current fitness.
-                p.pbest.position = JSON.parse(JSON.stringify(p.position));//Creates a deep copy of the current position p.position and assigns it to p.pbest.position. Ensures that the personal best position remains unchanged even if p.position is modified later.
+    // --- Phase 1: Update Population Size ---
+    if (popSizeChanged) {
+        if (currentPopSize > population.length) {
+            // Add new particles if population size increased
+            const numNewParticles = currentPopSize - population.length;
+            for (let i = 0; i < numNewParticles; i++) {
+                population.push(new Particle(currentAvailableFilters));
             }
-        });
-
-        // Find the absolute best particle from the user's selection. Finds the fittest particle in a population of particles, excluding particles with infinite fitness
-        const fittestParticle = population.filter(p => p.fitness !== Infinity).sort((a, b) => a.fitness - b.fitness)[0];
-        
-        // Update the global best if the new best is better
-        if (fittestParticle) {
-             if (!globalBest || fittestParticle.fitness < globalBest.fitness) {globalBest = JSON.parse(JSON.stringify(fittestParticle));}
+            updateStatus(`Population increased by ${numNewParticles}.`);
+        } else if (currentPopSize < population.length) {
+            // Trim population if size decreased (keep the best ones)
+            // Sort by fitness (lower is better), then by pbest.fitness as a tie-breaker, then by index to maintain some stability.
+            population.sort((a, b) => {
+                if (a.fitness !== b.fitness) return a.fitness - b.fitness;
+                if (a.pbest.fitness !== b.pbest.fitness) return a.pbest.fitness - b.pbest.fitness;
+                return 0; // Maintain original order if fitness is equal
+            });
+            population = population.slice(0, currentPopSize);
+            updateStatus(`Population decreased to ${currentPopSize}.`);
         }
     }
+
+    // --- Phase 2: Update Particle Fitness & Global Best ---
+    // Calculate fitness for ALL particles based on user selection
+    population.forEach((p, i) => {
+        const isSelected = selectedIndices.includes(i);
+        // If a particle was selected, its fitness is its rank in the selection (lower is better).
+        // If not selected, its fitness is Infinity (bad).
+        p.fitness = isSelected ? selectedIndices.indexOf(i) : Infinity;
+
+        // Update personal best (pbest) if current fitness is better
+        if (p.fitness < p.pbest.fitness) {
+            p.pbest.fitness = p.fitness;
+            p.pbest.position = JSON.parse(JSON.stringify(p.position)); // Deep copy
+        }
+    });
+
+    // Find the absolute best particle from the user's selection to update globalBest
+    const fittestSelectedParticle = population.filter(p => p.fitness !== Infinity)
+                                            .sort((a, b) => a.fitness - b.fitness)[0];
     
-    if (!globalBest) {$statusText.text("No selection made. Evolving with new random variations.");} // If there's no global best yet (e.g., first "Evolve" with no selection), we can't evolve. Just keep the re-initialized random particles.
-    else {population.forEach(p => p.update(globalBest.pbest.position, psoParams));}// Evolve ALL particles (both selected and newly randomized ones) toward the global best
+    // Update the global best if a fitter particle was found this generation
+    if (fittestSelectedParticle) {
+         if (!globalBest || fittestSelectedParticle.fitness < globalBest.fitness) {
+            globalBest = JSON.parse(JSON.stringify(fittestSelectedParticle)); // Deep copy
+         }
+    }
+
+    // --- Phase 3: Evolve Particles or Handle Special Cases ---
+    if (!globalBest || selectedIndices.length === 0) {
+        // Scenario A: No selection made OR globalBest doesn't exist yet (first run, or all selections reset).
+        // In this case, we want to ensure diversity or a fresh start for *all* particles.
+        // We'll re-initialize them randomly, ensuring a fresh set of filter chains.
+        // This is where "Original" might naturally appear initially due to random 'active' values.
+        updateStatus("No best selection found or initial run. Re-initializing population for diversity.");
+        population = Array.from({ length: currentPopSize }, () => new Particle(currentAvailableFilters));
+    } else {
+        // Scenario B: Global best exists, and a selection was made (or existed from previous gen).
+        // Evolve ALL particles towards the global best.
+        // This includes particles that were selected (they will stay close to their pbest/gbest)
+        // and unselected particles (they will move towards gbest).
+        population.forEach(p => p.update(globalBest.pbest.position, currentPsoParams));
+    }
+
+    // --- Phase 4: Adapt Particles to Filter Set Changes ---
+    // This is the sophisticated part for the 'TODO' comment.
+    // If the available filters change, we need to adapt existing particle positions.
+    // We don't want to just create new particles if the set changes for an unselected one.
+    if (filterSetChanged && globalBest) { // Only adapt if filters changed AND we have a global best to guide
+        updateStatus("Available filter set changed. Adapting particle filter types.");
+        population.forEach(p => {
+            // For each filter step in the particle's position:
+            for (let j = 0; j < MAX_FILTER_CHAIN_LENGTH; j++) {
+                const typeIndex = j * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.TYPE;
+                const valueIndex = j * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.VALUE;
+                const activeIndex = j * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.ACTIVE;
+
+                const currentFilterNormalizedType = p.position[typeIndex];
+                const oldFilterIndex = Math.floor(currentFilterNormalizedType * lastAppliedPSOState.availableFilters.length);
+                const oldFilterName = lastAppliedPSOState.availableFilters[oldFilterIndex];
+
+                // If the old filter is no longer available in the new set OR if this step was for an invalid filter
+                if (!currentAvailableFilters.includes(oldFilterName) || !oldFilterName) {
+                    // Assign a new, random filter from the *current* available set
+                    const newFilterIndex = Math.floor(Math.random() * currentAvailableFilters.length);
+                    p.position[typeIndex] = newFilterIndex / currentAvailableFilters.length;
+                    
+                    // You might also want to re-randomize value and active state for this specific filter step
+                    // if it's a completely new type, or keep them if you want to preserve some continuity.
+                    // For now, let's keep it simple: re-randomize value and active state for the replaced filter.
+                    p.position[valueIndex] = Math.random();
+                    p.position[activeIndex] = Math.random(); 
+                }
+            }
+            // After adapting its filter types, a particle's pbest might become invalid.
+            // Consider resetting pbest if its position no longer makes sense with the new filter set.
+            // For simplicity, we won't reset pbest here, but it's something to consider for very dynamic changes.
+        });
+    }
+
+    // --- Phase 5: Store Current State for Next Comparison ---
+    lastAppliedPSOState = {
+        psoParams: { ...currentPsoParams }, // Deep copy
+        availableFilters: [...currentAvailableFilters], // Deep copy
+        popSize: currentPopSize
+    };
 }
+// function updatePopulationState(availableFilters) {//gets values from sliders, selected image indices, reinitializes unselected particles, 
+//     const psoParams = {
+//         w: parseFloat($('#inertia-slider').val()),
+//         c1: parseFloat($('#cognition-slider').val()),
+//         c2: parseFloat($('#social-slider').val())
+//     };
+//     const selectedIndices = $('.thumbnail.selected').map((_, el) => $(el).data('index')).get();
+
+//     //TODO: ADD CONDITION HERE TO CHECK IF FILTER SET WAS CHANGED
+//     // Re-initialize unselected particles if the filter set has changed. This allows the swarm to adapt to new user constraints.
+//     population.forEach((p, i) => {
+//         const isSelected = selectedIndices.includes(i);
+//         //if (!isSelected) {population[i] = new Particle(availableFilters);}
+//         //If a particle was selected, its fitness is its rank in the selection. If not selected, its fitness is Infinity (bad).
+//         p.fitness = isSelected ? selectedIndices.indexOf(i) : Infinity;
+//         if (p.fitness < p.pbest.fitness) {
+//             p.pbest.fitness = p.fitness;
+//             p.pbest.position = JSON.parse(JSON.stringify(p.position)); // Deep copy
+//         }                
+//     });
+
+//     // 2. Find the absolute best particle from the user's selection to update globalBest
+//     const fittestSelectedParticle = population.filter(p => p.fitness !== Infinity).sort((a, b) => a.fitness - b.fitness)[0];
+
+//     // Update the global best if a fitter particle was found this generation
+//     if (fittestSelectedParticle) {
+//         if (!globalBest || fittestSelectedParticle.fitness < globalBest.fitness) {globalBest = JSON.parse(JSON.stringify(fittestSelectedParticle));} // Deep copy
+//     }
+
+//     // 3. Evolve ALL particles (both previously selected and unselected)
+//     //    based on the global best.
+//     //    Only if a globalBest exists. If no selection was ever made, globalBest might be null.
+//     if (!globalBest) {
+//         // If there's no global best yet (e.g., first "Evolve" with no selection), we can't evolve. For consistency, if there's no selection,
+//         // you might want to re-randomize *all* particles or just skip evolution. For now, if no global best, particles will remain in their current state (likely random).
+//         updateStatus("No selection made. Particles will evolve randomly or stay as is.");
+//         // If you want to force randomization if no globalBest exists:
+//         // population = Array.from({ length: population.length }, () => new Particle(availableFilters));
+//     } else {population.forEach(p => p.update(globalBest.pbest.position, psoParams));}
+
+//     // if (selectedIndices.length > 0) {
+//     //     // Calculate fitness for the selected particles
+//     //     population.forEach((p, i) => {//Iterates over each individual p in the population array. i is the current index of the individual in the array.        
+//     //         const fitness = selectedIndices.indexOf(i);//Checks if the current individual's index i is present in the selectedIndices array.If i is found, fitness is set to its position in selectedIndices (a number ≥ 0). If not found, fitness will be -1.
+//     //         p.fitness = (fitness !== -1) ? fitness : Infinity;//If i was found in selectedIndices, set p.fitness to that index value. If not found, assign Infinity (indicating a very poor or invalid fitness).
+//     //         if (p.fitness < p.pbest.fitness) {//Checks if the current p.fitness is better (i.e., numerically lower) than the individual's personal best p.pbest.fitness.
+//     //             p.pbest.fitness = p.fitness;//If so, updates the individual's personal best fitness to the current fitness.
+//     //             p.pbest.position = JSON.parse(JSON.stringify(p.position));//Creates a deep copy of the current position p.position and assigns it to p.pbest.position. Ensures that the personal best position remains unchanged even if p.position is modified later.
+//     //         }
+//     //     });
+
+//     //     // Find the absolute best particle from the user's selection. Finds the fittest particle in a population of particles, excluding particles with infinite fitness
+//     //     const fittestParticle = population.filter(p => p.fitness !== Infinity).sort((a, b) => a.fitness - b.fitness)[0];
+        
+//     //     // Update the global best if the new best is better
+//     //     if (fittestParticle) {
+//     //          if (!globalBest || fittestParticle.fitness < globalBest.fitness) {globalBest = JSON.parse(JSON.stringify(fittestParticle));}
+//     //     }
+//     // }
+    
+//     // if (!globalBest) {$statusText.text("No selection made. Evolving with new random variations.");} // If there's no global best yet (e.g., first "Evolve" with no selection), we can't evolve. Just keep the re-initialized random particles.
+//     // else {population.forEach(p => p.update(globalBest.pbest.position, psoParams));}// Evolve ALL particles (both selected and newly randomized ones) toward the global best
+// }
 
 // --- Filter Application (Complete, Robust, and Flexible) ---
 function applyFilterSequence(position, availableFilters) {
