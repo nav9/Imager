@@ -97,17 +97,6 @@ class Particle {
             this.position[i] = Math.max(0, Math.min(1, this.position[i])); // Clamp
         }
     }
-    // update(gbestPosition, psoParams) {
-    //     const { w, c1, c2 } = psoParams;
-    //     for (let i = 0; i < this.position.length; i++) {
-    //         const r1 = Math.random(), r2 = Math.random();
-    //         // Standard PSO equations
-    //         this.velocity[i] = (w * this.velocity[i]) + (c1 * r1 * (this.pbest.position[i] - this.position[i])) + (c2 * r2 * (gbestPosition[i] - this.position[i]));
-    //         this.position[i] += this.velocity[i];            
-    //         // The PSO operates on a normalized [0, 1] space. This clamping is correct. The specific value constraints for each filter type are handled during the 'applyFilterSequence' step.
-    //         this.position[i] = Math.max(0, Math.min(1, this.position[i]));
-    //     }
-    // }
 }
 
 // --- Initialization ---
@@ -143,7 +132,9 @@ function createLogModal() {
 
 function populateFilterCheckboxes() {
     Object.entries(ALL_FILTERS).forEach(([value, { name }]) => {
-        const isChecked = (name === GAMMA || name === BRIGHTNESS || name === CONTRAST) ? 'checked' : '';
+        //const isChecked = (name === GAMMA || name === BRIGHTNESS || name === CONTRAST) ? 'checked' : '';
+        //$filterCheckboxesContainer.append(`<div class="form-check"><input class="form-check-input" type="checkbox" value="${value}" id="cb-${value}" ${isChecked}><label class="form-check-label" for="cb-${value}">${name}</label></div>`);
+        const isChecked = 'checked';
         $filterCheckboxesContainer.append(`<div class="form-check"><input class="form-check-input" type="checkbox" value="${value}" id="cb-${value}" ${isChecked}><label class="form-check-label" for="cb-${value}">${name}</label></div>`);
     });
 }
@@ -239,7 +230,6 @@ function handleReset(isNewImage = false) {
 }
 
 // --- Asynchronous Evolution on Main Thread ---
-// --- Asynchronous Evolution on Main Thread ---
 async function runEvolution(isReset) {
     if (!srcMat || isProcessing) return;
     
@@ -287,37 +277,6 @@ async function runEvolution(isReset) {
     }
     cancelProcessing(startTime);
 }
-// async function runEvolution(isReset) {
-//     if (!srcMat || isProcessing) return;
-//     isProcessing = true;
-//     updateButtonStates();
-//     const startTime = performance.now();
-//     startTimer(startTime);
-//     showOverlay("Initializing...", "0.0s", calculateETA());
-//     await new Promise(resolve => setTimeout(resolve, 50));//creates a delay of 50 milliseconds in an asynchronous function. often used to wait briefly, perhaps for UI updates, asynchronous processes, or to debounce actions.
-
-//     const availableFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
-//     if (availableFilters.length === 0) {alert("Please select at least one filter type to use for evolution.");cancelProcessing(startTime); return;}
-
-//     if (isReset) {//reset button was clicked
-//         globalBest = null;
-//         const popSize = parseInt($('#num-images-slider').val());
-//         population = Array.from({ length: popSize }, () => new Particle(availableFilters));
-//     } else {updatePopulationState(availableFilters);}
-    
-//     history.push({
-//         population: JSON.parse(JSON.stringify(population)),
-//         psoParams: {inertia: $('#inertia-slider').val(), cognition: $('#cognition-slider').val(), social: $('#social-slider').val(),},
-//         previewSize: $('#preview-size-slider').val(),
-//         availableFilters: availableFilters
-//     });
-//     updateHistoryDropdown(history.length);
-//     await processAndRenderPopulation(population, `Processing Generation ${history.length}`, availableFilters);    
-//     if (isProcessing) {
-//         pageIsDirty = true; 
-//         updateStatus(`Generation ${history.length} complete. Select your favorites and click 'Evolve'.`);} else {updateStatus("Processing cancelled by user.");}
-//     cancelProcessing(startTime);
-// }
 
 async function processAndRenderPopulation(pop, statusPrefix, filters) {
     const allResults = [];
@@ -349,30 +308,6 @@ async function processAndRenderPopulation(pop, statusPrefix, filters) {
     }
     if (isProcessing) renderGrid(allResults);
 }
-// async function processAndRenderPopulation(pop, statusPrefix, filters) {
-//     const allResults = [];
-//     $imageGrid.empty().height('auto');
-//     //let counter = 0;
-    
-//     for (let i = 0; i < pop.length; i++) {
-//         if (!isProcessing) break;
-//         const status = `${statusPrefix} (${i + 1}/${pop.length})`;
-//         $('#processing-status').text(status);
-        
-//         const { resultMat, tooltip } = applyFilterSequence(pop[i].position, filters);
-//         let canvas = document.createElement('canvas');
-//         cv.imshow(canvas, resultMat);
-//         //if (areMatsIdentical(srcMat, resultMat)) {counter = counter + 1;}
-
-//         allResults.push({ canvas: canvas, tooltip: tooltip });
-//         resultMat.delete();
-        
-//         if (i % 2 === 0) await new Promise(resolve => setTimeout(resolve, 0));
-//     }
-//     if (isProcessing) {renderGrid(allResults)}
-//     //alert(counter);
-// }
-
 
 function areMatsIdentical(mat1, mat2) {
     // 1. Check dimensions and type first. This is a very fast check.
@@ -462,136 +397,6 @@ function updatePopulationState(isReset, psoParams, availableFilters) {
         p.update(evolutionTargets, psoParams);
     });
 }
-// async function updatePopulationState() {
-//     const currentPopSize = parseInt($('#num-images-slider').val());
-//     const currentAvailableFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
-//     const currentPsoParams = {
-//         w: parseFloat($('#inertia-slider').val()),
-//         c1: parseFloat($('#cognition-slider').val()),
-//         c2: parseFloat($('#social-slider').val())
-//     };
-
-//     const selectedIndices = $('.thumbnail.selected').map((_, el) => $(el).data('index')).get();
-
-//     // Determine if PSO parameters or available filters have changed
-//     const psoParamsChanged = (
-//         currentPsoParams.w !== lastAppliedPSOState.psoParams.w ||
-//         currentPsoParams.c1 !== lastAppliedPSOState.psoParams.c1 ||
-//         currentPsoParams.c2 !== lastAppliedPSOState.psoParams.c2
-//     );
-//     const filterSetChanged = (
-//         currentAvailableFilters.length !== lastAppliedPSOState.availableFilters.length ||
-//         currentAvailableFilters.some(filter => !lastAppliedPSOState.availableFilters.includes(filter))
-//     );
-//     const popSizeChanged = currentPopSize !== lastAppliedPSOState.popSize;
-
-//     // --- Phase 1: Update Population Size ---
-//     if (popSizeChanged) {
-//         if (currentPopSize > population.length) {
-//             // Add new particles if population size increased
-//             const numNewParticles = currentPopSize - population.length;
-//             for (let i = 0; i < numNewParticles; i++) {
-//                 population.push(new Particle(currentAvailableFilters));
-//             }
-//             updateStatus(`Population increased by ${numNewParticles}.`);
-//         } else if (currentPopSize < population.length) {
-//             // Trim population if size decreased (keep the best ones)
-//             // Sort by fitness (lower is better), then by pbest.fitness as a tie-breaker, then by index to maintain some stability.
-//             population.sort((a, b) => {
-//                 if (a.fitness !== b.fitness) return a.fitness - b.fitness;
-//                 if (a.pbest.fitness !== b.pbest.fitness) return a.pbest.fitness - b.pbest.fitness;
-//                 return 0; // Maintain original order if fitness is equal
-//             });
-//             population = population.slice(0, currentPopSize);
-//             updateStatus(`Population decreased to ${currentPopSize}.`);
-//         }
-//     }
-
-//     // --- Phase 2: Update Particle Fitness & Global Best ---
-//     // Calculate fitness for ALL particles based on user selection
-//     population.forEach((p, i) => {
-//         const isSelected = selectedIndices.includes(i);
-//         // If a particle was selected, its fitness is its rank in the selection (lower is better).
-//         // If not selected, its fitness is Infinity (bad).
-//         p.fitness = isSelected ? selectedIndices.indexOf(i) : Infinity;
-
-//         // Update personal best (pbest) if current fitness is better
-//         if (p.fitness < p.pbest.fitness) {
-//             p.pbest.fitness = p.fitness;
-//             p.pbest.position = JSON.parse(JSON.stringify(p.position)); // Deep copy
-//         }
-//     });
-
-//     // Find the absolute best particle from the user's selection to update globalBest
-//     const fittestSelectedParticle = population.filter(p => p.fitness !== Infinity)
-//                                             .sort((a, b) => a.fitness - b.fitness)[0];
-    
-//     // Update the global best if a fitter particle was found this generation
-//     if (fittestSelectedParticle) {
-//          if (!globalBest || fittestSelectedParticle.fitness < globalBest.fitness) {
-//             globalBest = JSON.parse(JSON.stringify(fittestSelectedParticle)); // Deep copy
-//          }
-//     }
-
-//     // --- Phase 3: Evolve Particles or Handle Special Cases ---
-//     if (!globalBest || selectedIndices.length === 0) {
-//         // Scenario A: No selection made OR globalBest doesn't exist yet (first run, or all selections reset).
-//         // In this case, we want to ensure diversity or a fresh start for *all* particles.
-//         // We'll re-initialize them randomly, ensuring a fresh set of filter chains.
-//         // This is where "Original" might naturally appear initially due to random 'active' values.
-//         updateStatus("No best selection found or initial run. Re-initializing population for diversity.");
-//         population = Array.from({ length: currentPopSize }, () => new Particle(currentAvailableFilters));
-//     } else {
-//         // Scenario B: Global best exists, and a selection was made (or existed from previous gen).
-//         // Evolve ALL particles towards the global best.
-//         // This includes particles that were selected (they will stay close to their pbest/gbest)
-//         // and unselected particles (they will move towards gbest).
-//         population.forEach(p => p.update(globalBest.pbest.position, currentPsoParams));
-//     }
-
-//     // --- Phase 4: Adapt Particles to Filter Set Changes ---
-//     // This is the sophisticated part for the 'TODO' comment.
-//     // If the available filters change, we need to adapt existing particle positions.
-//     // We don't want to just create new particles if the set changes for an unselected one.
-//     if (filterSetChanged && globalBest) { // Only adapt if filters changed AND we have a global best to guide
-//         updateStatus("Available filter set changed. Adapting particle filter types.");
-//         population.forEach(p => {
-//             // For each filter step in the particle's position:
-//             for (let j = 0; j < MAX_FILTER_CHAIN_LENGTH; j++) {
-//                 const typeIndex = j * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.TYPE;
-//                 const valueIndex = j * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.VALUE;
-//                 const activeIndex = j * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.ACTIVE;
-
-//                 const currentFilterNormalizedType = p.position[typeIndex];
-//                 const oldFilterIndex = Math.floor(currentFilterNormalizedType * lastAppliedPSOState.availableFilters.length);
-//                 const oldFilterName = lastAppliedPSOState.availableFilters[oldFilterIndex];
-
-//                 // If the old filter is no longer available in the new set OR if this step was for an invalid filter
-//                 if (!currentAvailableFilters.includes(oldFilterName) || !oldFilterName) {
-//                     // Assign a new, random filter from the *current* available set
-//                     const newFilterIndex = Math.floor(Math.random() * currentAvailableFilters.length);
-//                     p.position[typeIndex] = newFilterIndex / currentAvailableFilters.length;
-                    
-//                     // You might also want to re-randomize value and active state for this specific filter step
-//                     // if it's a completely new type, or keep them if you want to preserve some continuity.
-//                     // For now, let's keep it simple: re-randomize value and active state for the replaced filter.
-//                     p.position[valueIndex] = Math.random();
-//                     p.position[activeIndex] = Math.random(); 
-//                 }
-//             }
-//             // After adapting its filter types, a particle's pbest might become invalid.
-//             // Consider resetting pbest if its position no longer makes sense with the new filter set.
-//             // For simplicity, we won't reset pbest here, but it's something to consider for very dynamic changes.
-//         });
-//     }
-
-//     // --- Phase 5: Store Current State for Next Comparison ---
-//     lastAppliedPSOState = {
-//         psoParams: { ...currentPsoParams }, // Deep copy
-//         availableFilters: [...currentAvailableFilters], // Deep copy
-//         popSize: currentPopSize
-//     };
-// }
 
 // --- Filter Application (Complete, Robust, and Flexible) ---
 function applyFilterSequence(position, availableFilters) {
@@ -774,32 +579,6 @@ async function processAndRenderPopulationForHistory(historicState) {
     }
 }
 
-// async function loadFromHistory() {
-//     if (isProcessing) return;
-//     const selectedIndex = parseInt($historyDropdown.val());
-//     if (isNaN(selectedIndex)) return;
-    
-//     isProcessing = true; // Prevent other actions during re-render
-//     const historicState = history[selectedIndex];
-//     population = JSON.parse(JSON.stringify(historicState.population)); // Restore population
-    
-//     // Restore settings from history
-//     $('#inertia-slider').val(historicState.psoParams.inertia).trigger('input');
-//     $('#cognition-slider').val(historicState.psoParams.cognition).trigger('input');
-//     $('#social-slider').val(historicState.psoParams.social).trigger('input');
-//     $('#preview-size-slider').val(historicState.previewSize).trigger('input');
-//     $('#filter-checkboxes input').each(function() {$(this).prop('checked', historicState.availableFilters.includes($(this).val()));});
-
-//     const statusPrefix = `Rendering Generation ${selectedIndex + 1}`;
-//     const startTime = performance.now();
-//     startTimer(startTime);
-//     showOverlay(statusPrefix, "0.0s", "...");
-//     await new Promise(resolve => setTimeout(resolve, 50));
-//     await processAndRenderPopulation(historicState.population, statusPrefix, historicState.availableFilters);
-//     updateStatus(`Viewing Generation ${selectedIndex + 1}. You can Evolve from this state or choose another from History.`);
-//     cancelProcessing(startTime);
-// }
-
 function cancelProcessing(startTime) {
     isProcessing = false;
     stopTimer(startTime);
@@ -813,18 +592,6 @@ function updateHistoryDropdown(newLength) {
     $historyDropdown.val(value);
 }
 
-// function renderGrid(results) {
-//     $imageGrid.empty().height('auto');
-//     if (!originalImage) return;
-//     const newWidth = originalImage.width * (parseInt($('#preview-size-slider').val()) / 100);
-//     results.forEach((result, index) => {
-//         const container = $(`<div class="thumbnail-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${result.tooltip}"></div>`);
-//         const img = $(`<img src="${result.canvas.toDataURL('image/webp', 0.8)}" class="thumbnail" data-index="${index}" style="width:${newWidth}px; height: auto;">`);
-//         container.append(img);
-//         $imageGrid.append(container);
-//     });
-//     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
-// }
 function renderGrid(results, selectedIndices = []) {
     $imageGrid.empty().height('auto');
     if (!originalImage) return;
