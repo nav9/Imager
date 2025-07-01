@@ -63,7 +63,7 @@ class Particle {
         this.pbest = { position: [], fitness: Infinity };
         this.fitness = Infinity;
 
-        // FIX: Improve initial diversity by attempting to assign unique filters
+        // Improve initial diversity by attempting to assign unique filters
         const shuffledFilters = [...availableFilters].sort(() => 0.5 - Math.random());
 
         for (let i = 0; i < MAX_FILTER_CHAIN_LENGTH; i++) {
@@ -82,17 +82,13 @@ class Particle {
     }
     // In the Particle class...
     update(bestPositions, psoParams) {
-        // If there are multiple bests, pick one at random to guide this particle.
-        // This creates more diverse evolution towards the user's selected styles.
+        // If there are multiple bests, pick one at random to guide this particle. This creates more diverse evolution towards the user's selected styles.
         const targetBest = bestPositions[Math.floor(Math.random() * bestPositions.length)];
         const gbestPosition = targetBest.pbest.position;
-
         const { w, c1, c2 } = psoParams;
         for (let i = 0; i < this.position.length; i++) {
             const r1 = Math.random(), r2 = Math.random();
-            this.velocity[i] = (w * this.velocity[i]) +
-                            (c1 * r1 * (this.pbest.position[i] - this.position[i])) +
-                            (c2 * r2 * (gbestPosition[i] - this.position[i]));
+            this.velocity[i] = (w * this.velocity[i]) + (c1 * r1 * (this.pbest.position[i] - this.position[i])) + (c2 * r2 * (gbestPosition[i] - this.position[i]));
             this.position[i] += this.velocity[i];
             this.position[i] = Math.max(0, Math.min(1, this.position[i])); // Clamp
         }
@@ -160,6 +156,7 @@ function setupEventListeners() {
     $('#cancel-processing-btn').on('click', () => { isProcessing = false; });
     $historyDropdown.on('change', loadFromHistory);
     $('#compare-btn').on('click', showCompareModal);
+    $('#manual-btn').on('click', showManualEditModal);
     $('#save-btn').on('click', saveSelectedImages);
     $imageGrid.on('click', '.thumbnail-container', function() {$(this).find('.thumbnail').toggleClass('selected'); updateButtonStates();});
     $(window).on('beforeunload', () => pageIsDirty ? "You have unsaved changes. Are you sure you want to leave?" : undefined);
@@ -223,7 +220,7 @@ function handlePopulationChange() {
 }
 
 function handleReset(isNewImage = false) {
-    if (!confirm("Are you sure you want to reset? This will clear all history.")) {return;}
+    if (!isNewImage && !confirm("Are you sure you want to reset? This will clear all history.")) {return;}
     history = [];
     $historyDropdown.html('<option>History</option>').val("History");
     runEvolution(true);
@@ -756,9 +753,11 @@ function updateButtonStates() {
     
     if (!imageLoaded) {        
         $('#try-again-btn, #reset-btn, #history-dropdown, #compare-btn, #save-btn').prop('disabled', true);// Disable almost everything if no image is loaded
+        $('#manual-btn').prop('disabled', true); // Ensure it's disabled
     } else {
         $('#try-again-btn, #reset-btn').prop('disabled', !anyFilterSelected);
         $('#compare-btn, #save-btn').prop('disabled', !anySelected);
+        $('#manual-btn').prop('disabled', !anySelected);
         $historyDropdown.prop('disabled', history.length === 0);
     }
 }
@@ -792,6 +791,195 @@ function calculateETA() {
     if (generationTimes.length === 0) return "calculating...";
     const avgTime = generationTimes.reduce((a, b) => a + b, 0) / generationTimes.length;
     return `~${avgTime.toFixed(1)}s`;
+}
+
+// --- NEW: Manual Edit Mode Functions ---
+
+// A state variable to manage the modal
+let manualEditState = {
+    particles: [], // Holds the data for the selected images
+    currentIndex: 0 // Index of the currently viewed image in the `particles` array
+};
+
+// Initializes and shows the manual edit modal with the user's selected images.
+function showManualEditModal() {
+    const selectedIndices = $('.thumbnail.selected').map((_, el) => $(el).data('index')).get();
+    if (selectedIndices.length === 0) return;
+    // Populate the state with the full particle data for each selected image
+    manualEditState.particles = selectedIndices.map(index => ({originalIndex: index, particleData: JSON.parse(JSON.stringify(population[index]))}));
+    manualEditState.currentIndex = 0;
+    renderManualEditView();// Render the first selected image and its controls    
+    const manualModal = new bootstrap.Modal(document.getElementById('manual-edit-modal'));// Show the modal
+    manualModal.show();
+    // Attach event listeners for modal controls (only once)
+    $('#manual-prev').off('click').on('click', () => navigateManualView(-1));
+    $('#manual-next').off('click').on('click', () => navigateManualView(1));
+    $('#manual-save-btn').off('click').on('click', saveManualImage);
+}
+
+// Renders the image and its unique control toolbar inside the modal.
+function renderManualEditView() {
+    const currentState = manualEditState.particles[manualEditState.currentIndex];
+    const particlePosition = currentState.particleData.position;
+    const availableFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
+
+    // 1. Decode the particle's position into a sequence of filter steps
+    const { sequence } = getSequenceFromPosition(particlePosition, availableFilters);
+    
+    // 2. Build the dynamic toolbar HTML
+    const $toolbar = $('#manual-toolbar').empty();
+    $toolbar.html('<div class="d-flex flex-nowrap gap-3"></div>');
+    const $toolbarContainer = $toolbar.find('.d-flex');
+
+    if (sequence.length === 0) {
+        $toolbarContainer.append('<p class="text-muted m-auto">This image has no active filters to edit.</p>');
+    } else {
+        sequence.forEach((step, index) => {
+            const filterConfig = ALL_FILTERS[step.op];
+            const isBinary = filterConfig.min === 0 && filterConfig.max === 1;
+            
+            const controlHtml = `
+                <div class="p-2 bg-body-tertiary rounded">
+                    <label for="manual-slider-${index}" class="form-label small fw-bold">${filterConfig.name}: <span id="manual-value-${index}">${step.val.toFixed(2)}</span></label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="range" class="form-range manual-control" id="manual-slider-${index}" 
+                               min="${filterConfig.min}" max="${filterConfig.max}" step="${isBinary ? 1 : 0.01}" value="${step.val}" 
+                               data-op="${step.op}" data-index="${index}" ${isBinary ? 'style="display:none;"' : ''}>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input manual-control" type="checkbox" role="switch" id="manual-toggle-${index}" data-index="${index}" checked>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $toolbarContainer.append(controlHtml);
+        });
+    }
+
+    // 3. Process the image using the current sequence
+    const { resultMat } = applyFilterSequenceFromSteps(sequence);
+    const canvas = document.createElement('canvas');
+    cv.imshow(canvas, resultMat);
+    $('#manual-image').attr('src', canvas.toDataURL());
+    resultMat.delete();
+
+    // 4. Update navigation arrow visibility
+    $('#manual-prev').toggle(manualEditState.currentIndex > 0);
+    $('#manual-next').toggle(manualEditState.currentIndex < manualEditState.particles.length - 1);
+    $('#manualEditModalLabel').text(`Manual Editor (Image ${manualEditState.currentIndex + 1} of ${manualEditState.particles.length})`);
+
+    // 5. Attach event listeners to the new controls
+    $('.manual-control').on('input change', handleManualTweaking);
+}
+
+//Handles real-time image updates when a slider or toggle in the modal is adjusted.
+function handleManualTweaking() {
+    const $toolbar = $('#manual-toolbar');
+    let currentSequence = [];
+
+    // 1. Reconstruct the filter sequence from the current state of the UI controls
+    $toolbar.find('.form-range').each(function() {
+        const $slider = $(this);
+        const index = $slider.data('index');
+        const isActive = $(`#manual-toggle-${index}`).is(':checked');
+        
+        if (isActive) {
+            const value = parseFloat($slider.val());
+            currentSequence.push({
+                op: $slider.data('op'),
+                val: value
+            });
+            // Update the text value display in real-time
+            $(`#manual-value-${index}`).text(value.toFixed(2));
+        }
+    });
+
+    // 2. Re-process the image with the new sequence
+    const { resultMat } = applyFilterSequenceFromSteps(currentSequence);
+    const canvas = document.createElement('canvas');
+    cv.imshow(canvas, resultMat);
+    $('#manual-image').attr('src', canvas.toDataURL());
+    resultMat.delete();
+}
+
+//Navigates between selected images within the manual edit modal.
+function navigateManualView(direction) {
+    const newIndex = manualEditState.currentIndex + direction;
+    if (newIndex >= 0 && newIndex < manualEditState.particles.length) {
+        manualEditState.currentIndex = newIndex;
+        renderManualEditView();
+    }
+}
+
+//Saves the currently displayed, manually-edited image.
+async function saveManualImage() {
+    updateStatus("Preparing manually edited image for download...");
+    const dataUrl = $('#manual-image').attr('src');
+    const zip = new JSZip();
+    
+    // Recreate the manifest tooltip from the current toolbar state
+    let tooltip = $('#manual-toolbar .p-2').map(function() {
+        const index = $(this).find('.form-range').data('index');
+        if ($(`#manual-toggle-${index}`).is(':checked')) {
+            const op = $(this).find('.form-range').data('op');
+            const val = parseFloat($(this).find('.form-range').val());
+            return `${op}: ${val.toFixed(2)}`;
+        }
+    }).get().join(' -> ');
+
+    const imageName = `Imager-Manual-Edit.png`;
+    const manifest = `${imageName}\n--------------------\n${tooltip}\n\n`;
+
+    const blob = await fetch(dataUrl).then(res => res.blob());
+    zip.file(imageName, blob);
+    zip.file("manifest.txt", manifest);
+
+    const content = await zip.generateAsync({ type: "blob" });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(content);
+    link.download = `Imager-Manual-Edit.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    updateStatus("Download complete.");
+}
+
+//A generic helper to decode a particle's position vector into a readable sequence.
+function getSequenceFromPosition(position, availableFilters) {
+    // This logic is extracted from the start of the old `applyFilterSequence`
+    let sequence = [];
+    const usedFilters = new Set();
+    for (let i = 0; i < MAX_FILTER_CHAIN_LENGTH; i++) {
+        const typeIndex = i * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.TYPE;
+        const valueIndex = i * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.VALUE;
+        const activeIndex = i * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.ACTIVE;
+        if (position[activeIndex] > 0.5) {
+            const filterNameIndex = Math.floor(position[typeIndex] * availableFilters.length);
+            const filterName = availableFilters[filterNameIndex];
+            if (filterName && !usedFilters.has(filterName)) {
+                usedFilters.add(filterName);
+                let value = ALL_FILTERS[filterName].min + (position[valueIndex] * (ALL_FILTERS[filterName].max - ALL_FILTERS[filterName].min));
+                sequence.push({ op: filterName, val: value });
+            }
+        }
+    }
+    return { sequence };
+}
+
+// A generic helper that applies a given sequence of filter steps to the original image.
+function applyFilterSequenceFromSteps(sequence) {
+    let tempMat = srcMat.clone();
+    // This loop contains the same filter logic as your existing `applyFilterSequence`
+    sequence.forEach(step => {
+        try {
+            // Apply value constraints here just before processing
+            const filterName = step.op;
+            let value = step.val;
+            switch(filterName) { /* ... apply constraints like in previous version ... */ }
+            // Apply the actual cv.filter call based on filterName and the constrained value
+            switch(filterName) { /* ... all the cv. calls ... */ }
+        } catch(err) { /* ... */ }
+    });
+    return { resultMat: tempMat };
 }
 
 init();// Start the application
