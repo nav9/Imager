@@ -269,9 +269,7 @@ async function runEvolution(isReset) {
     if (isProcessing) {
         pageIsDirty = true;
         updateStatus(`Generation ${history.length} complete. Select your favorites and click 'Evolve'.`);
-    } else {
-        updateStatus("Processing cancelled by user.");
-    }
+    } else {updateStatus("Processing cancelled by user.");}
     cancelProcessing(startTime);
 }
 
@@ -308,9 +306,7 @@ async function processAndRenderPopulation(pop, statusPrefix, filters) {
 
 function areMatsIdentical(mat1, mat2) {
     // 1. Check dimensions and type first. This is a very fast check.
-    if (mat1.rows !== mat2.rows || mat1.cols !== mat2.cols || mat1.type() !== mat2.type()) {
-        return false;
-    }
+    if (mat1.rows !== mat2.rows || mat1.cols !== mat2.cols || mat1.type() !== mat2.type()) {return false;}
     
     // 2. Get the underlying data arrays.
     const data1 = mat1.data;
@@ -318,17 +314,12 @@ function areMatsIdentical(mat1, mat2) {
 
     // 3. Check if the arrays are the same length.
     // This is a redundant check if rows, cols, and type are the same, but good for safety.
-    if (data1.length !== data2.length) {
-        return false;
-    }
+    if (data1.length !== data2.length) {return false;}
 
     // 4. Compare the elements of the arrays.
     // Use a simple for loop for speed.
     for (let i = 0; i < data1.length; i++) {
-        if (data1[i] !== data2[i]) {
-            // Found a difference, so they are not identical.
-            return false;
-        }
+        if (data1[i] !== data2[i]) {return false;}// Found a difference, so they are not identical.
     }
     
     // If the loop completes without finding any differences, the matrices are identical.
@@ -357,17 +348,13 @@ function updatePopulationState(isReset, psoParams, availableFilters) {
             p.pbest.fitness = p.fitness;
             p.pbest.position = JSON.parse(JSON.stringify(p.position));
         }
-        if (isSelected) {
-            bestSelectedParticles.push(p);
-        }
+        if (isSelected) {bestSelectedParticles.push(p);}
     });
 
     // Update the global best if a new best is found in the current selection
     const fittestParticle = bestSelectedParticles.sort((a, b) => a.fitness - b.fitness)[0];
     if (fittestParticle) {
-        if (!globalBest || fittestParticle.fitness < globalBest.fitness) {
-            globalBest = JSON.parse(JSON.stringify(fittestParticle));
-        }
+        if (!globalBest || fittestParticle.fitness < globalBest.fitness) {globalBest = JSON.parse(JSON.stringify(fittestParticle));}
     }
 
     // --- Phase 3: Determine Evolution Strategy ---
@@ -383,24 +370,19 @@ function updatePopulationState(isReset, psoParams, availableFilters) {
     } else {
         // Strategy C: No selection and no history of a global best. Reset for diversity.
         updateStatus("No best individual found. Re-initializing population for diversity.");
-        population.forEach((p, i) => {
-            population[i] = new Particle(availableFilters);
-        });
+        population.forEach((p, i) => {population[i] = new Particle(availableFilters);});
         return; // Done, the re-initialized population is ready.
     }
     
     // --- Phase 4: Evolve the Entire Population ---
-    population.forEach(p => {
-        p.update(evolutionTargets, psoParams);
-    });
+    population.forEach(p => {p.update(evolutionTargets, psoParams);});
 }
 
 // --- Filter Application (Complete, Robust, and Flexible) ---
-function applyFilterSequence(position, availableFilters) {
-    let tempMat = srcMat.clone();
+function applyFilterSequence(position, availableFilters) {    
     let sequence = [];
     const usedFilters = new Set(); // Ensure unique filters per chain
-
+    
     for (let i = 0; i < MAX_FILTER_CHAIN_LENGTH; i++) {
         // Use named dimensions for readability
         const typeIndex = i * FILTER_ITEM_SIZE + FILTER_DIMENSIONS.TYPE;
@@ -414,8 +396,7 @@ function applyFilterSequence(position, availableFilters) {
             if (filterName && !usedFilters.has(filterName)) {
                 usedFilters.add(filterName);
                 const normalizedValue = position[valueIndex];
-                const { min, max } = ALL_FILTERS[filterName];
-                
+                const { min, max } = ALL_FILTERS[filterName];                
                 // --- FIX: Robust Value De-normalization and Clamping ---
                 let value = min + (normalizedValue * (max - min));
 
@@ -427,14 +408,12 @@ function applyFilterSequence(position, availableFilters) {
                         break;
                     case BLUR:
                     case MEDIAN:
-                    case SOBEL:
-                        // Force odd integer for kernel sizes
-                        value = Math.round(value);
+                    case SOBEL:                        
+                        value = Math.round(value);// Force odd integer for kernel sizes
                         value = Math.floor(value / 2) * 2 + 1;
                         break;
-                    case GAMMA:
-                        // Prevent division by zero
-                        value = Math.max(0.01, value);
+                    case GAMMA:                        
+                        value = Math.max(0.01, value);// Prevent division by zero
                         break;
                 }                
                 sequence.push({ op: filterName, val: value });
@@ -442,6 +421,15 @@ function applyFilterSequence(position, availableFilters) {
         }
     }
 
+    tempMat = applyTheChain(sequence);
+    //const tooltip = sequence.map(s => `${s.op}: ${s.val.toFixed(2)}`).join(' -> ') || "Original (No Active Filters)";
+    const tooltip = sequence.map(s => `${s.op}: ${s.val.toFixed(2)}`).join(' -> ') || "Original (No Active Filters)";
+    //return { resultMat: tempMat, tooltip: tooltip };
+    return { resultMat: tempMat, tooltip: tooltip, sequence: sequence };
+}
+
+function applyTheChain(sequence) {
+    let tempMat = srcMat.clone();
     // Apply the constructed sequence
     sequence.forEach(step => {        
         try {
@@ -516,11 +504,8 @@ function applyFilterSequence(position, availableFilters) {
                 }
             }
         } catch (err) { console.error(`Failed to apply filter ${step.op} with value ${step.val}:`, err); }
-    });
-    //const tooltip = sequence.map(s => `${s.op}: ${s.val.toFixed(2)}`).join(' -> ') || "Original (No Active Filters)";
-    const tooltip = sequence.map(s => `${s.op}: ${s.val.toFixed(2)}`).join(' -> ') || "Original (No Active Filters)";
-    //return { resultMat: tempMat, tooltip: tooltip };
-    return { resultMat: tempMat, tooltip: tooltip, sequence: sequence };
+    });    
+    return tempMat;
 }
 
 // --- History, UI, and State Management ---
@@ -884,10 +869,7 @@ function handleManualTweaking() {
         
         if (isActive) {
             const value = parseFloat($slider.val());
-            currentSequence.push({
-                op: $slider.data('op'),
-                val: value
-            });
+            currentSequence.push({op: $slider.data('op'), val: value});
             // Update the text value display in real-time
             $(`#manual-value-${index}`).text(value.toFixed(2));
         }
@@ -967,18 +949,7 @@ function getSequenceFromPosition(position, availableFilters) {
 
 // A generic helper that applies a given sequence of filter steps to the original image.
 function applyFilterSequenceFromSteps(sequence) {
-    let tempMat = srcMat.clone();
-    // This loop contains the same filter logic as your existing `applyFilterSequence`
-    sequence.forEach(step => {
-        try {
-            // Apply value constraints here just before processing
-            const filterName = step.op;
-            let value = step.val;
-            switch(filterName) { /* ... apply constraints like in previous version ... */ }
-            // Apply the actual cv.filter call based on filterName and the constrained value
-            switch(filterName) { /* ... all the cv. calls ... */ }
-        } catch(err) { /* ... */ }
-    });
+    tempMat = applyTheChain(sequence);
     return { resultMat: tempMat };
 }
 
