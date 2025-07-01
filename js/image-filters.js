@@ -223,7 +223,7 @@ function handlePopulationChange() {
 }
 
 function handleReset(isNewImage = false) {
-    if (!isNewImage && !confirm("Are you sure you want to reset? This will clear all history.")) {return;}
+    if (!confirm("Are you sure you want to reset? This will clear all history.")) {return;}
     history = [];
     $historyDropdown.html('<option>History</option>').val("History");
     runEvolution(true);
@@ -527,38 +527,78 @@ function applyFilterSequence(position, availableFilters) {
 }
 
 // --- History, UI, and State Management ---
+/**
+ * Handles the "view-only" rendering of a past generation from the history dropdown.
+ * This does NOT change the current population or control panel state.
+ */
 async function loadFromHistory() {
     if (isProcessing) return;
     const selectedIndex = parseInt($historyDropdown.val());
     if (isNaN(selectedIndex)) return;
-    
-    isProcessing = true;
-    updateButtonStates();
 
     const historicState = history[selectedIndex];
-    population = JSON.parse(JSON.stringify(historicState.population)); // Restore population for potential next evolution
-    
-    // Restore settings from history to the UI
-    $('#inertia-slider').val(historicState.psoParams.inertia).trigger('input');
-    $('#cognition-slider').val(historicState.psoParams.cognition).trigger('input');
-    $('#social-slider').val(historicState.psoParams.social).trigger('input');
-    $('#preview-size-slider').val(historicState.previewSize).trigger('input');
-    $('#filter-checkboxes input').each(function() {
-        $(this).prop('checked', historicState.availableFilters.includes($(this).val()));
-    });
+    if (!historicState) return;
 
-    const statusPrefix = `Rendering Generation ${selectedIndex + 1}`;
+    isProcessing = true;
+    updateButtonStates(); // Disable buttons during processing
     const startTime = performance.now();
     startTimer(startTime);
-    showOverlay(statusPrefix, "0.0s", "...");
-    await new Promise(resolve => setTimeout(resolve, 50));
+    // Show overlay without ETA
+    showOverlay(`Rendering Generation ${selectedIndex + 1}...`, "0.0s");
+
+    // This function now does the dedicated work of rendering a past state
+    await renderHistoricGeneration(historicState);
+
+    if (isProcessing) { // If it wasn't cancelled
+        updateStatus(`Viewing Generation ${selectedIndex + 1}. Your current evolution state is preserved.`);
+    } else {
+        updateStatus("History view rendering cancelled.");
+        // If cancelled, re-render the LATEST generation to avoid confusion
+        const latestState = history[history.length - 1];
+        if (latestState) await renderHistoricGeneration(latestState);
+    }
     
-    // The rendering process now needs the historic selection info
-    await processAndRenderPopulationForHistory(historicState);
-    
-    updateStatus(`Viewing Generation ${selectedIndex + 1}. You can Evolve from this state or select another from History.`);
-    cancelProcessing(startTime);
+    // Cleanup and re-enable buttons
+    stopTimer(startTime, true); // Pass true to skip recording generation time
+    hideOverlay();
+    isProcessing = false;
+    updateButtonStates();
 }
+
+/**
+ * A dedicated renderer for viewing past generations without altering the main state.
+ * It processes a historic population and highlights its specific selections.
+ * @param {object} historicState - A single entry from the `history` array.
+ */
+async function renderHistoricGeneration(historicState) {
+    const allResults = [];
+    $imageGrid.empty().height('auto');
+
+    for (let i = 0; i < historicState.population.length; i++) {
+        // The loop checks the global `isProcessing` flag, so the cancel button works
+        if (!isProcessing) break;
+
+        const particlePosition = historicState.population[i].position;
+        const availableFilters = historicState.availableFilters;
+        
+        // Use the generic filter application function
+        const { resultMat, tooltip } = applyFilterSequence(particlePosition, availableFilters);
+        
+        let canvas = document.createElement('canvas');
+        cv.imshow(canvas, resultMat);
+        allResults.push({ canvas: canvas, tooltip: tooltip });
+        resultMat.delete();
+        
+        // Yield to keep the UI responsive
+        if (i % 2 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+    }
+
+    if (isProcessing) {
+        // Render the grid, passing the historic selections to be highlighted
+        renderGrid(allResults, historicState.selectedIndices);
+    }
+}
+
 async function processAndRenderPopulationForHistory(historicState) {
     const allResults = [];
     $imageGrid.empty().height('auto');
@@ -592,9 +632,17 @@ function updateHistoryDropdown(newLength) {
     $historyDropdown.val(value);
 }
 
+/**
+ * Renders the grid of generated images. Can optionally highlight a set of indices.
+ * @param {Array<object>} results - Array of { canvas, tooltip } objects.
+ * @param {Array<number>} [selectedIndices=[]] - Array of indices to give the 'selected' class.
+ */
 function renderGrid(results, selectedIndices = []) {
     $imageGrid.empty().height('auto');
     if (!originalImage) return;
+
+    // Use the CURRENT preview size slider value for consistency, even when viewing history.
+    // The historic 'previewSize' is not used, as this is just a view preference.
     const newWidth = originalImage.width * (parseInt($('#preview-size-slider').val()) / 100);
 
     results.forEach((result, index) => {
@@ -611,6 +659,26 @@ function renderGrid(results, selectedIndices = []) {
     });
     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
 }
+
+// function renderGrid(results, selectedIndices = []) {
+//     $imageGrid.empty().height('auto');
+//     if (!originalImage) return;
+//     const newWidth = originalImage.width * (parseInt($('#preview-size-slider').val()) / 100);
+
+//     results.forEach((result, index) => {
+//         const container = $(`<div class="thumbnail-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${result.tooltip}"></div>`);
+//         const img = $(`<img src="${result.canvas.toDataURL('image/webp', 0.8)}" class="thumbnail" data-index="${index}" style="width:${newWidth}px; height: auto;">`);
+        
+//         // If viewing history, apply the 'selected' class based on the stored indices
+//         if (selectedIndices.includes(index)) {
+//             img.addClass('selected');
+//         }
+        
+//         container.append(img);
+//         $imageGrid.append(container);
+//     });
+//     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
+// }
 
 function showCompareModal() {
     const $modalArea = $('#modal-content-area').empty();
@@ -696,10 +764,10 @@ function updateButtonStates() {
 }
 
 // All other helper functions for timers and overlay are included here.
-function showOverlay(status, time, eta) {
+function showOverlay(status, time, eta = "...") { // Add a default value for eta
     $('#processing-status').text(status);
     $('#processing-timer').text(`Time elapsed: ${time}`);
-    $('#processing-eta').text(`ETA: ${eta}`);
+    $('#processing-eta').text(`ETA: ${eta}`); // It will show "..." if no ETA is passed
     $overlay.removeClass('d-none');
 }
 
@@ -713,9 +781,9 @@ function startTimer(startTime) {
     }, 100);
 }
 
-function stopTimer(startTime) {
+function stopTimer(startTime, skipRecording = false) { // Add a flag to skip recording
     clearInterval(timerInterval);
-    if (!isProcessing) return; // Don't record time if cancelled
+    if (!isProcessing || skipRecording) return; // Don't record time if cancelled or if just viewing history
     const totalTime = (performance.now() - startTime) / 1000;
     generationTimes.push(totalTime);
 }
