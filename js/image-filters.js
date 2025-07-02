@@ -442,15 +442,15 @@ function applyFilterSequence(position, availableFilters) {
         }
     }
 
-    tempMat = applyTheChain(sequence);
+    tempMat = applyTheChain(sequence, srcMat.clone());
     //const tooltip = sequence.map(s => `${s.op}: ${s.val.toFixed(2)}`).join(' -> ') || "Original (No Active Filters)";
     const tooltip = sequence.map(s => `${s.op}: ${s.val.toFixed(2)}`).join(' -> ') || "Original (No Active Filters)";
     //return { resultMat: tempMat, tooltip: tooltip };
     return { resultMat: tempMat, tooltip: tooltip, sequence: sequence };
 }
 
-function applyTheChain(sequence) {
-    let tempMat = srcMat.clone();
+function applyTheChain(sequence, tempMat) {
+    //let tempMat = srcMat.clone();
     // Apply the constructed sequence
     sequence.forEach(step => {        
         try {
@@ -799,6 +799,88 @@ function showManualEditModal() {
     $('#manual-prev').off('click').on('click', () => navigateManualView(-1));
     $('#manual-next').off('click').on('click', () => navigateManualView(1));
     $('#manual-save-btn').off('click').on('click', saveManualImage);
+    $('#manual-upload-apply-btn').off('click').on('click', handleManualUploadAndApply);
+}
+
+function getSequenceFromToolbar() {//A helper function to read the current state of the modal's toolbar. returns {Array<object>} The sequence of active filter steps.
+    let currentSequence = [];
+    $('#manual-toolbar .form-range').each(function() {
+        const $slider = $(this);
+        const index = $slider.data('index');
+        const isActive = $(`#manual-toggle-${index}`).is(':checked');        
+        if (isActive) {currentSequence.push({op: $slider.data('op'), val: parseFloat($slider.val())});}
+    });
+    return currentSequence;
+}
+
+function downloadCanvas(canvas, fileName) {// A helper function to trigger a download for a given canvas.
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = canvas.toDataURL('image/png'); // Or get format from a setting
+    link.click();
+}
+
+function handleManualUploadAndApply() {//Handles the new "Upload & Apply" functionality.
+    // Dynamically create a file input to open the dialog
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.accept = 'image/*';
+
+    // This event fires after the user selects files
+    fileInput.onchange = async (e) => {
+        const files = e.target.files;
+        if (!files.length) return;
+
+        // 1. Get the current filter sequence from the modal's UI
+        const sequenceToApply = getSequenceFromToolbar();
+        
+        const $btn = $('#manual-upload-apply-btn');
+        const originalText = $btn.html();
+        $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
+        
+        // 2. Process each uploaded file
+        for (const file of files) {
+            const image = new Image();
+            const reader = new FileReader();
+
+            // Create a promise to handle the async loading of each image
+            await new Promise(resolve => {
+                reader.onload = (event) => {
+                    image.onload = () => {
+                        try {
+                            // Load the new image into an OpenCV matrix
+                            let tempMat = cv.imread(image);
+                            
+                            // 3. Apply the captured filter chain
+                            applyTheChain(sequenceToApply, tempMat);
+
+                            // 4. Draw the result to a canvas and download
+                            const resultCanvas = document.createElement('canvas');
+                            cv.imshow(resultCanvas, tempMat);
+                            downloadCanvas(resultCanvas, `filtered-${file.name}`);
+
+                            // 5. IMPORTANT: Clean up memory
+                            tempMat.delete();
+                            resolve(); // Resolve the promise to move to the next file
+                        } catch (err) {
+                            console.error(`Failed to process ${file.name}:`, err);
+                            resolve(); // Still resolve to not block the loop
+                        }
+                    };
+                    image.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // Restore button state
+        $btn.prop('disabled', false).html(originalText);
+        updateStatus(`${files.length} image(s) processed and downloaded.`);
+    };
+
+    // Trigger the file selection dialog
+    fileInput.click();
 }
 
 // Renders the image and its unique control toolbar inside the modal.
@@ -948,7 +1030,7 @@ function getSequenceFromPosition(position, availableFilters) {
 
 // A generic helper that applies a given sequence of filter steps to the original image.
 function applyFilterSequenceFromSteps(sequence) {
-    tempMat = applyTheChain(sequence);
+    tempMat = applyTheChain(sequence, srcMat.clone());
     return { resultMat: tempMat };
 }
 

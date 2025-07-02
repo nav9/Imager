@@ -115,26 +115,31 @@
     <div class="modal fade" id="manual-edit-modal" tabindex="-1" aria-labelledby="manualEditModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
             <div class="modal-content">
-                <!-- <div class="modal-header">
-                    <h5 class="modal-title" id="manualEditModalLabel">Manual Filter Editor</h5> 
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div> -->
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manualEditModalLabel">Manual Filter Editor</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body d-flex flex-column p-2">
                     <div class="flex-grow-1 d-flex justify-content-center align-items-center position-relative bg-dark rounded mb-2">
                         <img id="manual-image" src="" class="img-fluid" style="max-height: 100%; object-fit: contain;">
                         <i class="bi bi-arrow-left-circle-fill position-absolute top-50 start-0 translate-middle-y fs-1 text-white-50" id="manual-prev" style="cursor: pointer; margin-left: 20px;"></i>
                         <i class="bi bi-arrow-right-circle-fill position-absolute top-50 end-0 translate-middle-y fs-1 text-white-50" id="manual-next" style="cursor: pointer; margin-right: 20px;"></i>
-                    </div>                    
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <div id="manual-toolbar" class="bg-dark-subtle p-2 rounded" style="min-height: 100px; overflow-x: auto;"></div>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-success" id="manual-save-btn"><i class="bi bi-download"></i> Save Image</button>                    
+                    <div id="manual-toolbar" class="bg-dark-subtle p-2 rounded w-100" style="min-height: 100px; overflow-x: auto;"></div>
+                    <div class="ms-auto">
+                        <button type="button" class="btn btn-info" id="manual-upload-apply-btn" title="Upload one or more images and the parameters of this image will get applied to those images and the images will get automatically downloaded to the default browser download folder.">
+                            <i class="bi bi-upload"></i> Upload & Apply These Parameters
+                        </button>
+                        <button type="button" class="btn btn-success" id="manual-save-btn" title="Save the current image">
+                            <i class="bi bi-download"></i> Save Current Image
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
 
     <div id="processing-overlay" class="d-none">
         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
