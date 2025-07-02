@@ -18,7 +18,7 @@ const FILTER_DIMENSIONS = {
 };
 const FILTER_ITEM_SIZE = Object.keys(FILTER_DIMENSIONS).length;
 const BRIGHTNESS = 'Brightness'; const CONTRAST = 'Contrast'; const GAMMA = 'Gamma'; const SATURATION = 'Saturation'
-const CLAHE = 'CLAHE'; 
+// const CLAHE = 'CLAHE'; 
 const BLUR = 'Blur'; const MEDIAN = 'Median'; const SHARPEN = 'Sharpen'; const DENOISE = 'Denoise'
 const CANNY = 'Canny'; const SOBEL = 'Sobel'; const ERODE = 'Erode'; const DILATE = 'Dilate'; const THRESHOLD = 'Threshold'
 // const INVERT = 'Invert';
@@ -27,7 +27,7 @@ const ALL_FILTERS = {
     [CONTRAST]: { min: 1.0, max: 3.0, name: CONTRAST },
     [GAMMA]: { min: 0.2, max: 3.0, name: GAMMA },
     [SATURATION]: { min: 0.0, max: 3.0, name: SATURATION },
-    [CLAHE]: { min: 1.0, max: 10.0, name: CLAHE },
+    // [CLAHE]: { min: 1.0, max: 10.0, name: CLAHE },
     [BLUR]: { min: 1, max: 15, name: BLUR },
     [MEDIAN]: { min: 3, max: 15, name: MEDIAN },
     [SHARPEN]: { min: 0, max: 1, name: SHARPEN },
@@ -45,7 +45,7 @@ const FILTER_TOOLTIPS = {
     [CONTRAST]: "Modifies the difference between light and dark areas. Higher values increase definition.",
     [GAMMA]: "Controls the brightness and color balance. Useful for correcting underexposed/overexposed areas.",
     [SATURATION]: "Changes the intensity of colors. Higher values make colors more vivid.",
-    [CLAHE]: "Contrast Limited Adaptive Histogram Equalization. Improves local contrast, especially in low-light areas.",
+    // [CLAHE]: "Contrast Limited Adaptive Histogram Equalization. Improves local contrast, especially in low-light areas.",
     [BLUR]: "Applies a general blurring effect to the image, smoothing details.",
     [MEDIAN]: "Replaces each pixel with the median value of its neighbors. Effective for removing salt-and-pepper noise.",
     [SHARPEN]: "Enhances edges and details, making the image appear crisper.",
@@ -488,11 +488,11 @@ function applyTheChain(sequence) {
                     cv.cvtColor(hsv, tempMat, cv.COLOR_HSV2RGB); cv.cvtColor(tempMat, tempMat, cv.COLOR_RGB2RGBA);
                     hsv.delete(); planes.delete(); s.delete(); break;
                 }
-                case CLAHE: {
-                    gray = new cv.Mat(); cv.cvtColor(tempMat, gray, cv.COLOR_RGBA2GRAY, 0);
-                    let clahe = cv.createCLAHE(step.val, new cv.Size(8, 8)); clahe.apply(gray, gray);
-                    cv.cvtColor(gray, tempMat, cv.COLOR_GRAY2RGBA, 0); clahe.delete(); gray.delete(); gray = null; break;
-                }
+                // case CLAHE: {
+                //     gray = new cv.Mat(); cv.cvtColor(tempMat, gray, cv.COLOR_RGBA2GRAY, 0);
+                //     let clahe = cv.createCLAHE(step.val, new cv.Size(8, 8)); clahe.apply(gray, gray);
+                //     cv.cvtColor(gray, tempMat, cv.COLOR_GRAY2RGBA, 0); clahe.delete(); gray.delete(); gray = null; break;
+                // }
                 case BLUR: case 'median': {
                     let ksize = Math.floor(step.val / 2) * 2 + 1;
                     if (step.op === 'blur') cv.GaussianBlur(tempMat, tempMat, new cv.Size(ksize, ksize), 0);
