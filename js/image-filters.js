@@ -18,9 +18,10 @@ const FILTER_DIMENSIONS = {
 };
 const FILTER_ITEM_SIZE = Object.keys(FILTER_DIMENSIONS).length;
 const BRIGHTNESS = 'Brightness'; const CONTRAST = 'Contrast'; const GAMMA = 'Gamma'; const SATURATION = 'Saturation'
-const CLAHE = 'CLAHE'; const BLUR = 'Blur'; const MEDIAN = 'Median'; const SHARPEN = 'Sharpen'; const DENOISE = 'Denoise'
+const CLAHE = 'CLAHE'; 
+const BLUR = 'Blur'; const MEDIAN = 'Median'; const SHARPEN = 'Sharpen'; const DENOISE = 'Denoise'
 const CANNY = 'Canny'; const SOBEL = 'Sobel'; const ERODE = 'Erode'; const DILATE = 'Dilate'; const THRESHOLD = 'Threshold'
-const INVERT = 'Invert';
+// const INVERT = 'Invert';
 const ALL_FILTERS = {
     [BRIGHTNESS]: { min: -100, max: 100, name: BRIGHTNESS },
     [CONTRAST]: { min: 1.0, max: 3.0, name: CONTRAST },
@@ -36,7 +37,7 @@ const ALL_FILTERS = {
     [ERODE]: { min: 1, max: 9, name: ERODE },
     [DILATE]: { min: 1, max: 9, name: DILATE },
     [THRESHOLD]: { min: 50, max: 200, name: THRESHOLD },
-    [INVERT]: { min: 0, max: 1, name: INVERT },
+    // [INVERT]: { min: 0, max: 1, name: INVERT },
 };
 // Define the tooltip texts for each filter
 const FILTER_TOOLTIPS = {
@@ -54,7 +55,7 @@ const FILTER_TOOLTIPS = {
     [ERODE]: "Shrinks bright regions and expands dark regions, useful for removing small bright artifacts or disconnecting objects.",
     [DILATE]: "Expands bright regions and shrinks dark regions, useful for filling small holes or connecting fragmented objects.",
     [THRESHOLD]: "Converts the image to binary (black and white) based on a specified cutoff pixel intensity.",
-    [INVERT]: "Reverses the pixel values, creating a negative of the image."
+    // [INVERT]: "Reverses the pixel values, creating a negative of the image."
 };
 
 const MAX_FILTER_CHAIN_LENGTH = 5;
@@ -422,7 +423,7 @@ function applyFilterSequence(position, availableFilters) {
 
                 // Apply filter-specific constraints to prevent errors and NaN
                 switch(filterName) {
-                    case INVERT:
+                    // case INVERT:
                     case SHARPEN:
                         value = value > 0.5 ? 1 : 0; // Force binary
                         break;
@@ -461,7 +462,7 @@ function applyTheChain(sequence) {
                         lookUpTable[i] = Math.pow(i / 255.0, gammaValue) * 255;
                     }
                     let lutMat = cv.matFromArray(1, 256, cv.CV_8U, lookUpTable);
-                    let dstMat = new cv.Mat();                 
+                    //let dstMat = new cv.Mat();                 
                     cv.LUT(tempMat, lutMat, tempMat);
                     lutMat.delete();
                     break;
@@ -474,12 +475,10 @@ function applyTheChain(sequence) {
                     }
                     break;
                 }
-                case INVERT: {
-                    if (step.val === 1) { // Only apply if active
-                        cv.bitwise_not(tempMat, tempMat);
-                    }
-                    break;
-                }
+                // case INVERT: {
+                //     if (step.val === 1) { cv.bitwise_not(tempMat, tempMat);}// Only apply if active
+                //     break;
+                // }
                 case BRIGHTNESS: tempMat.convertTo(tempMat, -1, 1.0, step.val); break;
                 case CONTRAST: tempMat.convertTo(tempMat, -1, step.val, 0); break;       
                 case SATURATION: {
