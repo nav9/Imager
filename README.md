@@ -1,5 +1,15 @@
 # Imager
-A project for enhancing images using evoutionary algorithms, ordinary image processing functions and eventually, more artificial intelligence algorithms, based on user requirement.  
+A project for enhancing images using evoutionary algorithms, a few ordinary image processing functions and eventually, more artificial intelligence algorithms, based on user requirement.  
+  
+For a start, you can try the evolutionary image filtering algorithm which uses Particle Swarm Optimization and allows you to select the images that look reasonably good and keep "evolving" the images until they get better and better as per the images you select. If you don't yet like any of the images, you can keep clicking "Evolve" or the "Reset" option.  
+
+![Alt text](gallery/imageFiltering.png?raw=true "Image filtering")   
+  
+If at any stage you want to compare one or more images with the original, you can do so:    
+![Alt text](gallery/compare.png?raw=true "Compare images with the original")   
+  
+If you feel the image needs just a bit of tweaking that you can do manually, that is also possible.  
+![Alt text](gallery/manualEdit.png?raw=true "Manually tweak parameters to your satisfaction")   
   
 ## Existing functionality
 * **Evolutionary image enhancer:** Uses Particle Swarm Optimization to show the user multiple variations of enhanced images and allows the user to choose the best among those, leading to more evolution stages where the image gets refined more based on the user's choice.  
