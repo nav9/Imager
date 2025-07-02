@@ -16,6 +16,9 @@ If you feel the image needs just a bit of tweaking that you can do manually, tha
 * **Image resizing:** Resize and download multiple images at once.  
 * **Image cropping:** Crop and download multiple images at once.  
   
+# Running version of Imager  
+View Imager live on [GitHub.io](https://nav9.github.io/Imager/). 
+  
 # TODO
 * Consider adding merge-images (https://www.npmjs.com/package/merge-images)
 * Consider adding looks-same (https://www.npmjs.com/package/looks-same?ref=img.ly)
