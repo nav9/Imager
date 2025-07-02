@@ -31,7 +31,7 @@ const ALL_FILTERS = {
     [BLUR]: { min: 1, max: 15, name: BLUR },
     [MEDIAN]: { min: 3, max: 15, name: MEDIAN },
     [SHARPEN]: { min: 0, max: 1, name: SHARPEN },
-    [DENOISE]: { min: 1, max: 21, name: DENOISE },
+   // [DENOISE]: { min: 1, max: 21, name: DENOISE },
     [CANNY]: { min: 20, max: 100, name: CANNY },
     [SOBEL]: { min: 1, max: 5, name: SOBEL },
     [ERODE]: { min: 1, max: 9, name: ERODE },
@@ -49,7 +49,7 @@ const FILTER_TOOLTIPS = {
     [BLUR]: "Applies a general blurring effect to the image, smoothing details.",
     [MEDIAN]: "Replaces each pixel with the median value of its neighbors. Effective for removing salt-and-pepper noise.",
     [SHARPEN]: "Enhances edges and details, making the image appear crisper.",
-    [DENOISE]: "Reduces image noise while attempting to preserve details.",
+    //[DENOISE]: "Reduces image noise while attempting to preserve details.",
     [CANNY]: "A multi-stage algorithm to detect a wide range of edges in images.",
     [SOBEL]: "Detects edges by calculating the gradient magnitude, useful for highlighting transitions.",
     [ERODE]: "Shrinks bright regions and expands dark regions, useful for removing small bright artifacts or disconnecting objects.",
@@ -498,7 +498,7 @@ function applyTheChain(sequence, tempMat) {
                     if (step.op === 'blur') cv.GaussianBlur(tempMat, tempMat, new cv.Size(ksize, ksize), 0);
                     else cv.medianBlur(tempMat, tempMat, ksize); break;
                 }
-                case DENOISE: cv.fastNlMeansDenoisingColored(tempMat, tempMat, step.val, step.val, 7, 21); break;
+                //case DENOISE: cv.fastNlMeansDenoisingColored(tempMat, tempMat, step.val, step.val, 7, 21); break;
                 case CANNY: {
                     gray = new cv.Mat(); cv.cvtColor(tempMat, gray, cv.COLOR_RGBA2GRAY, 0);
                     cv.Canny(gray, gray, step.val, step.val * 2); cv.cvtColor(gray, tempMat, cv.COLOR_GRAY2RGBA, 0);
