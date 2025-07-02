@@ -38,6 +38,25 @@ const ALL_FILTERS = {
     [THRESHOLD]: { min: 50, max: 200, name: THRESHOLD },
     [INVERT]: { min: 0, max: 1, name: INVERT },
 };
+// Define the tooltip texts for each filter
+const FILTER_TOOLTIPS = {
+    [BRIGHTNESS]: "Adjusts the overall lightness or darkness of the image. Higher values make it brighter.",
+    [CONTRAST]: "Modifies the difference between light and dark areas. Higher values increase definition.",
+    [GAMMA]: "Controls the brightness and color balance. Useful for correcting underexposed/overexposed areas.",
+    [SATURATION]: "Changes the intensity of colors. Higher values make colors more vivid.",
+    [CLAHE]: "Contrast Limited Adaptive Histogram Equalization. Improves local contrast, especially in low-light areas.",
+    [BLUR]: "Applies a general blurring effect to the image, smoothing details.",
+    [MEDIAN]: "Replaces each pixel with the median value of its neighbors. Effective for removing salt-and-pepper noise.",
+    [SHARPEN]: "Enhances edges and details, making the image appear crisper.",
+    [DENOISE]: "Reduces image noise while attempting to preserve details.",
+    [CANNY]: "A multi-stage algorithm to detect a wide range of edges in images.",
+    [SOBEL]: "Detects edges by calculating the gradient magnitude, useful for highlighting transitions.",
+    [ERODE]: "Shrinks bright regions and expands dark regions, useful for removing small bright artifacts or disconnecting objects.",
+    [DILATE]: "Expands bright regions and shrinks dark regions, useful for filling small holes or connecting fragmented objects.",
+    [THRESHOLD]: "Converts the image to binary (black and white) based on a specified cutoff pixel intensity.",
+    [INVERT]: "Reverses the pixel values, creating a negative of the image."
+};
+
 const MAX_FILTER_CHAIN_LENGTH = 5;
 
 // --- State Variables ---
@@ -131,7 +150,8 @@ function populateFilterCheckboxes() {
         //const isChecked = (name === GAMMA || name === BRIGHTNESS || name === CONTRAST) ? 'checked' : '';
         //$filterCheckboxesContainer.append(`<div class="form-check"><input class="form-check-input" type="checkbox" value="${value}" id="cb-${value}" ${isChecked}><label class="form-check-label" for="cb-${value}">${name}</label></div>`);
         const isChecked = 'checked';
-        $filterCheckboxesContainer.append(`<div class="form-check"><input class="form-check-input" type="checkbox" value="${value}" id="cb-${value}" ${isChecked}><label class="form-check-label" for="cb-${value}">${name}</label></div>`);
+        const tooltipText = FILTER_TOOLTIPS[value] || 'No description available.'; // Get tooltip text
+        $filterCheckboxesContainer.append(`<div class="form-check"><input class="form-check-input" type="checkbox" value="${value}" id="cb-${value}" ${isChecked}><label class="form-check-label" for="cb-${value}" title="${tooltipText}">${name}</label></div>`);
     });
 }
 
@@ -641,26 +661,6 @@ function renderGrid(results, selectedIndices = []) {
     });
     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
 }
-
-// function renderGrid(results, selectedIndices = []) {
-//     $imageGrid.empty().height('auto');
-//     if (!originalImage) return;
-//     const newWidth = originalImage.width * (parseInt($('#preview-size-slider').val()) / 100);
-
-//     results.forEach((result, index) => {
-//         const container = $(`<div class="thumbnail-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${result.tooltip}"></div>`);
-//         const img = $(`<img src="${result.canvas.toDataURL('image/webp', 0.8)}" class="thumbnail" data-index="${index}" style="width:${newWidth}px; height: auto;">`);
-        
-//         // If viewing history, apply the 'selected' class based on the stored indices
-//         if (selectedIndices.includes(index)) {
-//             img.addClass('selected');
-//         }
-        
-//         container.append(img);
-//         $imageGrid.append(container);
-//     });
-//     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
-// }
 
 function showCompareModal() {
     const $modalArea = $('#modal-content-area').empty();
