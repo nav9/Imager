@@ -12,7 +12,7 @@ If you feel the image needs just a bit of tweaking that you can do manually, tha
 ![Alt text](gallery/manualEdit.png?raw=true "Manually tweak parameters to your satisfaction")   
   
 ## Existing functionality
-* **Evolutionary image enhancer:** Uses Particle Swarm Optimization to show the user multiple variations of enhanced images and allows the user to choose the best among those, leading to more evolution stages where the image gets refined more based on the user's choice.  
+* **Evolutionary image enhancer:** Uses Particle Swarm Optimization to show the user multiple variations of enhanced images and allows the user to choose the best among those, leading to more evolution stages where the image gets refined more based on the user's choice. You also have the option (using the "Manual" option) to upload any other images and apply a selected image's parameters onto those images.
 * **Image resizing:** Resize and download multiple images at once.  
 * **Image cropping:** Crop and download multiple images at once.  
   
