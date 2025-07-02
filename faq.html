@@ -32,13 +32,13 @@
         <div class="accordion" id="faqAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#q1"><strong>Is my data secure?</strong></button></h2>
-                <div id="q1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion"><div class="accordion-body">Absolutely. All image processing happens directly in your browser using JavaScript and WebAssembly. Your images are never uploaded to a server, ensuring your privacy.</div></div>
+                <div id="q1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion"><div class="accordion-body">Yes. Your data never leaves your computer. All image processing happens directly in your browser. Your images are never uploaded to a server, thus ensuring your privacy.</div></div>
             </div>
             <div class="accordion-item">
-                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q2"><strong>Why use an evolutionary algorithm for filters?</strong></button></h2>
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q2"><strong>Why use an evolutionary algorithm for image filtering?</strong></button></h2>
                 <div id="q2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
-                    <div class="accordion-body">It turns image editing from a technical task into a creative discovery. Instead of needing to know what 'gamma' or 'vibrance' does, you can simply choose what looks good to you. The app intelligently hones in on the perfect settings based on your choices.
-                        <p>Particle Swarm Optimization is an evolutionary algorithm inspired by the social behavior of bird flocks or fish schools. Each "particle" is an image variation that "flies" through the space of all possible filter combinations. Your selections guide the swarm to the best-looking results.</p>
+                    <div class="accordion-body">It turns image editing from a manual and laborious task into a creative discovery. The random evolution process coupled with multi-stage image filtering can show you filtered images that you may not even have imagined if you tried filtering images manually. You don't even have to understand what those filtering terms mean and don't have to bother tweaking values. You can simply choose what looks good to you. The algorithm intelligently hones in on the perfect settings based on your choices.
+                        <p>Particle Swarm Optimization is an evolutionary algorithm inspired by the social behavior of bird flocks or fish schools. Each "particle" of the "population" is an image (one of the images you see in the grid of images) variation that "flies" through the multi-dimensional space of all possible filter combinations. The images you select guides the filter values and parameters to the best-looking results.</p>
                         <ul>
                             <li>
                                 <strong>Inertia (Momentum):</strong> Controls how much a particle continues in its current direction.
@@ -49,9 +49,9 @@
                                 </ul>
                             </li>
                             <li>
-                                <strong>Cognition (Personal Best):</strong> Controls how much a particle is attracted to its *own* best-found location so far. This represents the particle's memory or "personal experience." A higher value makes it more stubborn and reliant on its own past success.</li>
+                                <strong>Cognition (Personal Best):</strong> Controls how much a particle is attracted to its *own* best-found parameters so far. This represents the particle's memory or "personal experience." A higher value makes it more stubborn and reliant on its own past success.</li>
                             <li>
-                                <strong>Social (Global Best):</strong> Controls how much a particle is attracted to the *swarm's* best-found location. This represents the influence of the community. A higher value makes the swarm converge more quickly on a promising result found by any single particle.</li>
+                                <strong>Social (Global Best):</strong> Controls how much a particle is attracted to the *swarm's* best-found parameters. This represents the influence of the community of image parameters. A higher value makes the swarm converge more quickly on a promising result found by any single particle.</li>
                         </ul>
                         <p><strong>The key is to balance these forces.</strong> A good starting point is high cognition and social values (e.g., 1.5 - 2.0). If you feel the results are too similar, try increasing inertia to explore more diverse options.</p>
                     </div>
@@ -59,11 +59,11 @@
             </div>
             <div class="accordion-item">
                 <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q3"><strong>What file formats are supported?</strong></button></h2>
-                <div id="q3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">The image filter tool works best with static images like PNG, JPEG, and WebP. The resizing and cropping tools have broader support, but note that animated GIFs will be processed as static images (first frame only) to keep the app fast and lightweight.</div></div>
+                <div id="q3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">The image filter tool works best with static images like PNG, JPEG, and WebP. The resizing and cropping tools have broader support, but note that animated GIFs will be processed as static images (first frame only) to keep the app fast and lightweight. The image format support can be improved if this app is built with server-side functionality or as a desktop app or a mobile app.</div></div>
             </div>
              <div class="accordion-item">
-                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q4"><strong>Do I need to install anything?</strong></button></h2>
-                <div id="q4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">No. Imager is a completely self-contained web application. There are no browser plugins or external software to install. It just works in any modern web browser like Chrome, Firefox, or Edge.</div></div>
+                <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#q4"><strong>Do I need to install anything? Can this project run without connecting to the Internet?</strong></button></h2>
+                <div id="q4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion"><div class="accordion-body">No need to install anything else. Imager is a completely self-contained web application. There are no browser plugins or external software to install. It just works in any modern web browser like Chrome, Firefox, or Edge. It uses OpenCV for image processing and that's a 10MB download, so that's the only thing that can take a while to download, but it's already included with this project, so there's no need to connect to the internet if you've downloaded this project locally. You can download it as a zip file by clicking the green "Code" button <a href="https://github.com/nav9/Imager" target="_blank">here</a>.</div></div>
             </div>
         </div>
     </main>

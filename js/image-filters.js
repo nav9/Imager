@@ -38,7 +38,7 @@ const ALL_FILTERS = {
     [THRESHOLD]: { min: 50, max: 200, name: THRESHOLD },
     [INVERT]: { min: 0, max: 1, name: INVERT },
 };
-const MAX_FILTER_CHAIN_LENGTH = 3;
+const MAX_FILTER_CHAIN_LENGTH = 5;
 
 // --- State Variables ---
 let originalImage = null, srcMat = null, population = [], history = [];
@@ -953,5 +953,8 @@ function applyFilterSequenceFromSteps(sequence) {
     return { resultMat: tempMat };
 }
 
-init();// Start the application
+$(document).ready(function() {
+    init();// Start the application
+});
+
 

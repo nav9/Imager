@@ -47,25 +47,25 @@
                             <h6><i class="bi bi-sliders"></i> Evolution Parameters</h6>
                             <div class="row">
                                 <div class="col-md-2 mb-2">
-                                    <label for="num-images-slider" class="form-label">Population Size: <span id="num-images-value">50</span></label>
+                                    <label for="num-images-slider" class="form-label" title="Number of image variations to generate. More is slower but explores more options.">Population Size: <span id="num-images-value">50</span></label>
                                     <input type="range" class="form-range" id="num-images-slider" min="5" max="100" value="50" title="Number of image variations to generate. More is slower but explores more options.">
                                 </div>
                                 <div class="col-md-2 mb-2">
-                                    <label for="preview-size-slider" class="form-label">Preview Size: <span id="preview-size-value">20</span>%</label>
+                                    <label for="preview-size-slider" class="form-label" title="Size of the preview thumbnails as a percentage of the original image width.">Preview Size: <span id="preview-size-value">20</span>%</label>
                                     <input type="range" class="form-range" id="preview-size-slider" min="5" max="50" value="20" title="Size of the preview thumbnails as a percentage of the original image width.">
                                 </div>
 
                                 <div class="col-md-2 mb-2">
-                                    <label for="inertia-slider" class="form-label">Inertia: <span id="inertia-value">0.3</span></label>
+                                    <label for="inertia-slider" class="form-label" title="Controls algorithm's momentum. High values explore new areas, low values refine current results. Optimal: 0.6-0.9">Inertia: <span id="inertia-value">0.3</span></label>
                                     <input type="range" class="form-range" id="inertia-slider" min="0.1" max="1.5" step="0.1" value="0.3" title="Controls algorithm's momentum. High values explore new areas, low values refine current results. Optimal: 0.6-0.9">
                                 </div>
                                 <div class="col-md-2 mb-2">
-                                    <label for="cognition-slider" class="form-label">Cognition (Individual): <span id="cognition-value">2.9</span></label>
+                                    <label for="cognition-slider" class="form-label" title="How much each variation 'trusts' its own previous best result. Optimal: 1.5-2.0">Cognition (Individual): <span id="cognition-value">2.9</span></label>
                                     <input type="range" class="form-range" id="cognition-slider" min="0.1" max="3.0" step="0.1" value="2.9" title="How much each variation 'trusts' its own previous best result. Optimal: 1.5-2.0">
                                 </div>
                                 <div class="col-md-2 mb-2">
-                                    <label for="social-slider" class="form-label">Social (Global): <span id="social-value">1.5</span></label>
-                                    <input type="range" class="form-range" id="social-slider" min="0.1" max="3.0" step="0.1" value="1.5" title="How much each variation is attracted to the best result found by the entire population. Optimal: 1.5-2.0">
+                                    <label for="social-slider" class="form-label" title="How much each variation is attracted to the best result found by the entire population. Optimal: 1.5-2.0 (if this slider is not visible, open this page by clicking the image-filters.html file directly)">Social (Global): <span id="social-value">1.5</span> </label>
+                                    <input type="range" class="form-range" id="social-slider" min="0.1" max="3.0" step="0.1" value="1.5" title="How much each variation is attracted to the best result found by the entire population. Optimal: 1.5-2.0 (if this slider is not visible, open this page by clicking the image-filters.html file directly)">
                                 </div>
                             </div>
                         </div>
@@ -148,11 +148,11 @@
         <button class="btn btn-danger mt-3" id="cancel-processing-btn"><i class="bi bi-x-circle"></i> Cancel</button>
     </div>
 
-    <script src="js/opencv.js" defer></script>
-    <script src="js/jquery.min.js" defer></script>
-    <script src="js/bootstrap.bundle.min.js" defer></script>
-    <script src="js/jszip.min.js" defer></script>
-    <script src="js/image-filters.js" defer></script>
+    <script src="js/opencv.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/jszip.min.js"></script>
+    <script src="js/image-filters.js"></script>
 </body>
 
 </html>
