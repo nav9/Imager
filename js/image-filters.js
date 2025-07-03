@@ -116,7 +116,7 @@ class Particle {
 }
 
 // --- Initialization ---
-function init() {
+function init() {    
     createLogModal(); // Create the hidden modal on page load
     populateFilterCheckboxes();
     updateButtonStates();
@@ -724,7 +724,6 @@ async function saveSelectedImages() {
     document.body.removeChild(link);
     updateStatus("Download complete.");
 }
-
 
 function updateButtonStates() {
     const imageLoaded = !!originalImage;
