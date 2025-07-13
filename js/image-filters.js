@@ -124,7 +124,7 @@ function init() {
     const cvReadyCheck = setInterval(() => {//checks whether the OpenCV library (referred to as cv) has been loaded and is ready to use
         if (typeof cv !== 'undefined' && cv.getBuildInformation) {//checks if the cv object has the method getBuildInformation (which indicates that OpenCV has been fully initialized)
             clearInterval(cvReadyCheck);
-            updateStatus("Ready. Please select an image to begin.");
+            updateStatus("Please click the 'Use Demo Image' button or 'Browse' to upload an image to begin. Click 'Show/Hide Controls' to adjust settings.");
             $('#image-upload').prop('disabled', false);
         }
     }, 100);
@@ -346,7 +346,7 @@ async function runEvolution(isReset) {
     
     if (isProcessing) {
         pageIsDirty = true;
-        updateStatus(`Generation ${history.length} complete. Select your favorites and click 'Evolve'.`);
+        updateStatus(`Generation ${history.length}. Select images you like and click 'Evolve' or if you don't like any image click 'Evolve' without selecting any.`);
     } else {updateStatus("Processing cancelled by user.");}
     cancelProcessing(startTime);
 }
