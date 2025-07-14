@@ -88,14 +88,6 @@ else
   echo "UTIF.js already exists."
 fi
 
-# A library for BMP encoding
-if [ ! -f "$JS_DIR/bmp.js" ]; then
-  echo "Downloading bmp.js for BMP support..."
-  curl -L "https://cdn.jsdelivr.net/gh/alicelab/bmp-js@main/bmp.js" -o "$JS_DIR/bmp.js"
-else
-  echo "bmp.js already exists."
-fi
-
 # A library for GIF encoding (omggif)
 if [ ! -f "$JS_DIR/omggif.js" ]; then
   echo "Downloading omggif.js for GIF support..."
