@@ -688,33 +688,59 @@ function updateHistoryDropdown(newLength) {
     $historyDropdown.val(value);
 }
 
-/**
- * Renders the grid of generated images. Can optionally highlight a set of indices.
- * @param {Array<object>} results - Array of { canvas, tooltip } objects.
- * @param {Array<number>} [selectedIndices=[]] - Array of indices to give the 'selected' class.
- */
 function renderGrid(results, selectedIndices = []) {
     $imageGrid.empty().height('auto');
     if (!originalImage) return;
 
-    // Use the CURRENT preview size slider value for consistency, even when viewing history.
-    // The historic 'previewSize' is not used, as this is just a view preference.
+    // Use the CURRENT preview size slider value for consistency.
     const newWidth = originalImage.width * (parseInt($('#preview-size-slider').val()) / 100);
 
     results.forEach((result, index) => {
-        const container = $(`<div class="thumbnail-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${result.tooltip}"></div>`);
-        const img = $(`<img src="${result.canvas.toDataURL('image/webp', 0.8)}" class="thumbnail" data-index="${index}" style="width:${newWidth}px; height: auto;">`);
+        // Use a <figure> element to group the image and its caption (ordinal)
+        const container = $(`
+            <figure class="thumbnail-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${result.tooltip}">
+                <img src="${result.canvas.toDataURL('image/webp', 0.8)}" class="thumbnail" data-index="${index}" style="width:${newWidth}px; height: auto;">
+                <figcaption class="figure-caption text-center small mt-1">#${index + 1}</figcaption>
+            </figure>
+        `);
         
-        // If viewing history, apply the 'selected' class based on the stored indices
+        // If viewing history, apply the 'selected' class to the image
         if (selectedIndices.includes(index)) {
-            img.addClass('selected');
+            container.find('img').addClass('selected');
         }
         
-        container.append(img);
         $imageGrid.append(container);
     });
+
     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
 }
+// /**
+//  * Renders the grid of generated images. Can optionally highlight a set of indices.
+//  * @param {Array<object>} results - Array of { canvas, tooltip } objects.
+//  * @param {Array<number>} [selectedIndices=[]] - Array of indices to give the 'selected' class.
+//  */
+// function renderGrid(results, selectedIndices = []) {
+//     $imageGrid.empty().height('auto');
+//     if (!originalImage) return;
+
+//     // Use the CURRENT preview size slider value for consistency, even when viewing history.
+//     // The historic 'previewSize' is not used, as this is just a view preference.
+//     const newWidth = originalImage.width * (parseInt($('#preview-size-slider').val()) / 100);
+
+//     results.forEach((result, index) => {
+//         const container = $(`<div class="thumbnail-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${result.tooltip}"></div>`);
+//         const img = $(`<img src="${result.canvas.toDataURL('image/webp', 0.8)}" class="thumbnail" data-index="${index}" style="width:${newWidth}px; height: auto;">`);
+        
+//         // If viewing history, apply the 'selected' class based on the stored indices
+//         if (selectedIndices.includes(index)) {
+//             img.addClass('selected');
+//         }
+        
+//         container.append(img);
+//         $imageGrid.append(container);
+//     });
+//     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
+// }
 
 function showCompareModal() {
     const $modalArea = $('#modal-content-area').empty();
