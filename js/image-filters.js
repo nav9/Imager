@@ -259,6 +259,8 @@ function loadImageFromSrc(src) {
                     originalImage = resizedImage; // The resized image is now our base
                     if (srcMat) srcMat.delete();
                     srcMat = cv.imread(originalImage);
+                    if (srcMat.empty()) throw new Error("OpenCV could not read the image.");
+                    
                     pageIsDirty = true;
                     handleReset(true); // Start evolution
                 };
@@ -267,6 +269,7 @@ function loadImageFromSrc(src) {
             }
 
             // If no resize is needed, proceed directly
+            calculateAndSetPreviewSize();
             originalImage = tempImage;
             if (srcMat) srcMat.delete();
             srcMat = cv.imread(originalImage);
@@ -700,7 +703,7 @@ function renderGrid(results, selectedIndices = []) {
         const container = $(`
             <figure class="thumbnail-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${result.tooltip}">
                 <img src="${result.canvas.toDataURL('image/webp', 0.8)}" class="thumbnail" data-index="${index}" style="width:${newWidth}px; height: auto;">
-                <figcaption class="figure-caption text-center small mt-1">#${index + 1}</figcaption>
+                <figcaption class="figure-caption text-center small">#${index + 1}</figcaption>
             </figure>
         `);
         
@@ -714,41 +717,55 @@ function renderGrid(results, selectedIndices = []) {
 
     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
 }
-// /**
-//  * Renders the grid of generated images. Can optionally highlight a set of indices.
-//  * @param {Array<object>} results - Array of { canvas, tooltip } objects.
-//  * @param {Array<number>} [selectedIndices=[]] - Array of indices to give the 'selected' class.
-//  */
-// function renderGrid(results, selectedIndices = []) {
-//     $imageGrid.empty().height('auto');
-//     if (!originalImage) return;
 
-//     // Use the CURRENT preview size slider value for consistency, even when viewing history.
-//     // The historic 'previewSize' is not used, as this is just a view preference.
-//     const newWidth = originalImage.width * (parseInt($('#preview-size-slider').val()) / 100);
+/**
+ * Calculates an optimal preview size based on screen space and image orientation,
+ * then updates the preview size slider.
+ */
+function calculateAndSetPreviewSize() {
+    if (!originalImage) return;
 
-//     results.forEach((result, index) => {
-//         const container = $(`<div class="thumbnail-container" data-bs-toggle="tooltip" data-bs-placement="top" title="${result.tooltip}"></div>`);
-//         const img = $(`<img src="${result.canvas.toDataURL('image/webp', 0.8)}" class="thumbnail" data-index="${index}" style="width:${newWidth}px; height: auto;">`);
-        
-//         // If viewing history, apply the 'selected' class based on the stored indices
-//         if (selectedIndices.includes(index)) {
-//             img.addClass('selected');
-//         }
-        
-//         container.append(img);
-//         $imageGrid.append(container);
-//     });
-//     $('[data-bs-toggle="tooltip"]').tooltip({ boundary: 'window', container: 'body' });
-// }
+    const gridWidth = $imageGrid.width();
+    const isLandscape = originalImage.width > originalImage.height;
+
+    // Define base target widths for different orientations
+    const targetLandscapePx = 300;
+    const targetPortraitPx = 180;
+
+    // Ensure we don't use more than a quarter of the grid width, for responsiveness
+    const responsiveLimitPx = gridWidth / 4;
+
+    // Determine the optimal width in pixels
+    let optimalWidthPx = isLandscape ? targetLandscapePx : targetPortraitPx;
+    optimalWidthPx = Math.min(optimalWidthPx, responsiveLimitPx); // Don't exceed responsive limit
+    optimalWidthPx = Math.max(optimalWidthPx, 120); // Set a minimum reasonable size
+
+    // Convert the pixel width to a percentage of the original image's width
+    const optimalPercentage = (optimalWidthPx / originalImage.width) * 100;
+
+    // Clamp the final percentage between the slider's min and max values
+    const finalPercentage = Math.round(Math.max(1, Math.min(100, optimalPercentage)));
+
+    // Update the slider and its value display
+    $('#preview-size-slider').val(finalPercentage);
+    $('#preview-size-value').text(finalPercentage);
+}
 
 function showCompareModal() {
     const $modalArea = $('#modal-content-area').empty();
-    const selected = $imageGrid.find('.thumbnail.selected').parent();
+    // Select the container of the selected thumbnail to get the index from the image inside
+    const selected = $imageGrid.find('.thumbnail.selected');
     if (selected.length === 0) return;
 
     let currentIndex = 0;
-    const selectedData = selected.map(function() {return { src: $(this).find('img').attr('src'), caption: $(this).attr('data-bs-original-title') };}).get();
+    // Capture the src, caption, AND the original index
+    const selectedData = selected.map(function() {
+        return {
+            src: $(this).attr('src'),
+            caption: $(this).parent().attr('data-bs-original-title'),
+            index: $(this).data('index') // Get the original index
+        };
+    }).get();
     
     $modalArea.html(`
         <div class="col-6 d-flex flex-column align-items-center">
@@ -765,9 +782,10 @@ function showCompareModal() {
     `);
 
     const updateCompareImage = () => {
-        $('#compare-image').attr('src', selectedData[currentIndex].src);
-        $('#compare-caption').text(selectedData[currentIndex].caption);
-        $('#compare-caption-title').text(`Selection ${currentIndex + 1}/${selectedData.length}`);
+        const currentData = selectedData[currentIndex];
+        $('#compare-image').attr('src', currentData.src);
+        $('#compare-caption').text(currentData.caption);
+        $('#compare-caption-title').text(`Selection ${currentIndex + 1}/${selectedData.length} (Image #${currentData.index + 1})`);  
         $('#compare-prev').toggle(currentIndex > 0);
         $('#compare-next').toggle(currentIndex < selectedData.length - 1);
     };
