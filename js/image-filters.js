@@ -784,18 +784,20 @@ function updateButtonStates() {
     const imageLoaded = !!originalImage;
     const anySelected = $imageGrid.find('.thumbnail.selected').length > 0;
     const anyFilterSelected = $filterCheckboxesContainer.find('input:checked').length > 0;
+    const $conditionalButtons = $('#compare-btn, #save-btn, #manual-btn');
 
-    if (isProcessing) {$('button, input').not('#cancel-processing-btn').prop('disabled', true); return;}
+    if (isProcessing) {
+        $('button, input').not('#cancel-processing-btn').prop('disabled', true); return;
+    }
     $('button, input').prop('disabled', false);
     $('#image-upload').prop('disabled', typeof cv === 'undefined' || isProcessing);
     
     if (!imageLoaded) {        
-        $('#try-again-btn, #reset-btn, #history-dropdown, #compare-btn, #save-btn').prop('disabled', true);// Disable almost everything if no image is loaded
-        $('#manual-btn').prop('disabled', true); // Ensure it's disabled
+        $('#try-again-btn, #reset-btn, #history-dropdown').prop('disabled', true);// Disable almost everything if no image is loaded
+        $conditionalButtons.hide();
     } else {
         $('#try-again-btn, #reset-btn').prop('disabled', !anyFilterSelected);
-        $('#compare-btn, #save-btn').prop('disabled', !anySelected);
-        $('#manual-btn').prop('disabled', !anySelected);
+        if (anySelected) {$conditionalButtons.show();} else {$conditionalButtons.hide();}
         $historyDropdown.prop('disabled', history.length === 0);
     }
 }
