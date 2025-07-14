@@ -206,26 +206,85 @@ function showLogModal() {
 function handleImageUpload(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {alert("Invalid file type. Please select an image that the browser recognizes as a supported image."); return;}
+
+    if (!file.type.startsWith('image/')) {
+        alert("Invalid file type. Please select an image that the browser recognizes as a supported image.");
+        return;
+    }
+
     const reader = new FileReader();
+
     reader.onload = event => {
-        originalImage = new Image();
-        originalImage.onload = () => {
+        const tempImage = new Image(); // Use a temporary image for initial load and dimension check
+
+        tempImage.onload = () => {
             try {
-                if (srcMat) srcMat.delete(); // Cleanup previous image
-                srcMat = cv.imread(originalImage);
-                if (srcMat.empty()) throw new Error("OpenCV could not read the image.");
-                pageIsDirty = true;
-                handleReset(true); // Perform a full reset on new image
+                let finalImage = tempImage; // Assume original image is the final one initially
+
+                // Check if the image needs to be resized
+                if ($('#reduce-large-image-check').is(':checked') && tempImage.width > 2000) {
+                    updateStatus(`Uploaded image is large (${tempImage.width}px wide). Resizing for performance...`);
+                    const newWidth = 1024;
+                    const newHeight = tempImage.height * (newWidth / tempImage.width);
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = newWidth;
+                    canvas.height = newHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(tempImage, 0, 0, newWidth, newHeight);
+
+                    // Create a new Image object from the resized canvas
+                    finalImage = new Image();
+                    finalImage.onload = () => {
+                        proceedWithImage(finalImage); // Use the resized image to proceed
+                    };
+                    finalImage.onerror = () => {
+                        console.error("Error creating resized image from canvas.toDataURL():", finalImage.src);
+                        alert("Error creating resized image data from upload.");
+                        updateStatus('Image processing failed during resize.');
+                    };
+                    finalImage.src = canvas.toDataURL(); // Use the data from the canvas
+                    return; // Exit here, processing continues in finalImage.onload
+                }
+
+                // If no resize is needed, proceed with the original loaded image
+                proceedWithImage(finalImage);
+
             } catch (error) {
-                alert(`Error processing image: ${error}. Please try a different image or check the console.`);
-                console.error(error);
+                alert(`Error processing uploaded image: ${error}. Please try a different image or check the console.`);
+                console.error("Error in handleImageUpload onload:", error);
             }
         };
-        originalImage.onerror = () => alert("Could not load the selected image file.");
-        originalImage.src = event.target.result;
+
+        tempImage.onerror = () => {
+            alert("Could not load the selected image file.");
+            console.error("Error loading image from FileReader result:", event.target.result);
+        };
+
+        tempImage.src = event.target.result; // Start loading the image data URL
     };
+
+    reader.onerror = () => {
+        alert("Error reading the file.");
+        console.error("FileReader error:", reader.error);
+    };
+
     reader.readAsDataURL(file);
+
+    // Encapsulate the final setup steps into a local function to avoid repetition
+    const proceedWithImage = (imageElement) => {
+        originalImage = imageElement;
+        
+        if (srcMat) srcMat.delete(); // Cleanup previous image
+        srcMat = cv.imread(originalImage);
+        if (srcMat.empty()) throw new Error("OpenCV could not read the image.");
+        
+        calculateAndSetPreviewSize(); // Calculate and set preview size AFTER image is ready and srcMat is created
+        
+        pageIsDirty = true;
+        handleReset(true); // Perform a full reset on new image
+        updateStatus('Image uploaded and processed successfully.');
+    };
 }
 
 /* Handles the click of the "Use demo image" button. */
@@ -256,21 +315,21 @@ function loadImageFromSrc(src) {
                 // Create a new Image object from the resized canvas
                 const resizedImage = new Image();
                 resizedImage.onload = () => {
-                    originalImage = resizedImage; // The resized image is now our base
+                    originalImage = resizedImage; // The resized image is now our base                    
                     if (srcMat) srcMat.delete();
                     srcMat = cv.imread(originalImage);
                     if (srcMat.empty()) throw new Error("OpenCV could not read the image.");
-                    
+                    calculateAndSetPreviewSize();
                     pageIsDirty = true;
                     handleReset(true); // Start evolution
-                };
+                };                
                 resizedImage.src = canvas.toDataURL(); // Use the data from the canvas
                 return;
             }
 
-            // If no resize is needed, proceed directly
-            calculateAndSetPreviewSize();
+            // If no resize is needed, proceed directly        
             originalImage = tempImage;
+            calculateAndSetPreviewSize();
             if (srcMat) srcMat.delete();
             srcMat = cv.imread(originalImage);
             if (srcMat.empty()) throw new Error("OpenCV could not read the image.");
