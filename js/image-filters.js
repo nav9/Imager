@@ -959,6 +959,67 @@ function showManualEditModal() {
     $('#manual-upload-apply-btn').off('click').on('click', handleManualUploadAndApply);
 }
 
+
+/**
+ * Renders the image and its unique control toolbar inside the modal.
+ */
+function renderManualEditView() {
+    const currentState = manualEditState.particles[manualEditState.currentIndex];
+    const particlePosition = currentState.particleData.position;
+    const availableFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
+
+    // 1. Decode the particle's position into a sequence of filter steps
+    const { sequence } = getSequenceFromPosition(particlePosition, availableFilters);
+    
+    // 2. Build the dynamic toolbar HTML
+    const $toolbar = $('#manual-toolbar').empty();
+    $toolbar.html('<div class="d-flex flex-nowrap gap-3"></div>');
+    const $toolbarContainer = $toolbar.find('.d-flex');
+
+    if (sequence.length === 0) {
+        $toolbarContainer.append('<p class="text-muted m-auto">This image has no active filters to edit.</p>');
+    } else {
+        sequence.forEach((step, index) => {
+            const filterConfig = ALL_FILTERS[step.op];
+            const isBinary = filterConfig.min === 0 && filterConfig.max === 1;
+            
+            const controlHtml = `
+                <div class="p-2 bg-body-tertiary rounded">
+                    <label for="manual-slider-${index}" class="form-label small fw-bold">${filterConfig.name}: <span id="manual-value-${index}">${step.val.toFixed(2)}</span></label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="range" class="form-range manual-control" id="manual-slider-${index}" 
+                               min="${filterConfig.min}" max="${filterConfig.max}" step="${isBinary ? 1 : 0.01}" value="${step.val}" 
+                               data-op="${step.op}" data-index="${index}" ${isBinary ? 'style="display:none;"' : ''}>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input manual-control" type="checkbox" role="switch" id="manual-toggle-${index}" data-index="${index}" checked>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $toolbarContainer.append(controlHtml);
+        });
+    }
+
+    // 3. Process the image using the current sequence
+    const { resultMat } = applyFilterSequenceFromSteps(sequence);
+    const canvas = document.createElement('canvas');
+    cv.imshow(canvas, resultMat);
+    $('#manual-image').attr('src', canvas.toDataURL());
+    resultMat.delete();
+
+    // 4. Update navigation arrow visibility
+    $('#manual-prev').toggle(manualEditState.currentIndex > 0);
+    $('#manual-next').toggle(manualEditState.currentIndex < manualEditState.particles.length - 1);
+
+    // --- THIS IS THE MODIFIED LINE ---
+    // It now uses currentState.originalIndex to get the population ordinal
+    const populationOrdinal = currentState.originalIndex + 1;
+    $('#manualEditModalLabel').text(`Manual Editor (Selection ${manualEditState.currentIndex + 1}/${manualEditState.particles.length} - Image #${populationOrdinal})`);
+    
+    // 5. Attach event listeners to the new controls
+    $('.manual-control').on('input change', handleManualTweaking);
+}
+
 function getSequenceFromToolbar() {//A helper function to read the current state of the modal's toolbar. returns {Array<object>} The sequence of active filter steps.
     let currentSequence = [];
     $('#manual-toolbar .form-range').each(function() {
@@ -1038,60 +1099,6 @@ function handleManualUploadAndApply() {//Handles the new "Upload & Apply" functi
 
     // Trigger the file selection dialog
     fileInput.click();
-}
-
-// Renders the image and its unique control toolbar inside the modal.
-function renderManualEditView() {
-    const currentState = manualEditState.particles[manualEditState.currentIndex];
-    const particlePosition = currentState.particleData.position;
-    const availableFilters = $('#filter-checkboxes input:checked').map((_, el) => el.value).get();
-
-    // 1. Decode the particle's position into a sequence of filter steps
-    const { sequence } = getSequenceFromPosition(particlePosition, availableFilters);
-    
-    // 2. Build the dynamic toolbar HTML
-    const $toolbar = $('#manual-toolbar').empty();
-    $toolbar.html('<div class="d-flex flex-nowrap gap-3"></div>');
-    const $toolbarContainer = $toolbar.find('.d-flex');
-
-    if (sequence.length === 0) {
-        $toolbarContainer.append('<p class="text-muted m-auto">This image has no active filters to edit.</p>');
-    } else {
-        sequence.forEach((step, index) => {
-            const filterConfig = ALL_FILTERS[step.op];
-            const isBinary = filterConfig.min === 0 && filterConfig.max === 1;
-            
-            const controlHtml = `
-                <div class="p-2 bg-body-tertiary rounded">
-                    <label for="manual-slider-${index}" class="form-label small fw-bold">${filterConfig.name}: <span id="manual-value-${index}">${step.val.toFixed(2)}</span></label>
-                    <div class="d-flex align-items-center gap-2">
-                        <input type="range" class="form-range manual-control" id="manual-slider-${index}" 
-                               min="${filterConfig.min}" max="${filterConfig.max}" step="${isBinary ? 1 : 0.01}" value="${step.val}" 
-                               data-op="${step.op}" data-index="${index}" ${isBinary ? 'style="display:none;"' : ''}>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input manual-control" type="checkbox" role="switch" id="manual-toggle-${index}" data-index="${index}" checked>
-                        </div>
-                    </div>
-                </div>
-            `;
-            $toolbarContainer.append(controlHtml);
-        });
-    }
-
-    // 3. Process the image using the current sequence
-    const { resultMat } = applyFilterSequenceFromSteps(sequence);
-    const canvas = document.createElement('canvas');
-    cv.imshow(canvas, resultMat);
-    $('#manual-image').attr('src', canvas.toDataURL());
-    resultMat.delete();
-
-    // 4. Update navigation arrow visibility
-    $('#manual-prev').toggle(manualEditState.currentIndex > 0);
-    $('#manual-next').toggle(manualEditState.currentIndex < manualEditState.particles.length - 1);
-    $('#manualEditModalLabel').text(`Manual Editor (Image ${manualEditState.currentIndex + 1} of ${manualEditState.particles.length})`);
-
-    // 5. Attach event listeners to the new controls
-    $('.manual-control').on('input change', handleManualTweaking);
 }
 
 //Handles real-time image updates when a slider or toggle in the modal is adjusted.
